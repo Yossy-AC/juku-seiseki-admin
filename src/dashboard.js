@@ -4,12 +4,11 @@
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         console.log('Dashboard loading...');
-        alert('ダッシュボード読み込み始まります');
 
         // データ読み込む
         const loaded = await dataLoader.loadAllData();
         console.log('Data loaded:', loaded);
-        
+
         if (!loaded) {
             const msg = 'データ読み込みエラーが発生しました';
             console.error(msg);
@@ -33,7 +32,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // ダッシュボードを表示
         displayDashboard(studentId);
-        alert('ダッシュボード読み込み完了');
     } catch (error) {
         console.error('Unexpected error:', error);
         alert(`予期しないエラー: ${error.message}`);
@@ -43,13 +41,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ダッシュボード表示関数
 function displayDashboard(studentId) {
     const student = dataLoader.getStudent(studentId);
-    const classInfo = dataLoader.getClass(student.classId);
+    
+    if (!student) {
+        alert(`生徒ID ${studentId} が見つかりません`);
+        return;
+    }
+
+    // 講座をjsonから取得、なければデフォルト値
+    let classInfo = dataLoader.getClass(student.classId);
+    if (!classInfo) {
+        classInfo = { name: student.classroom || '不明' };
+    }
+
     const grades = dataLoader.getStudentGrades(studentId);
     const attendance = dataLoader.getStudentAttendance(studentId);
 
-    if (!student || grades.length === 0) {
-        alert('生徒情報または成績が見つかりません');
-        return;
+    if (grades.length === 0) {
+        console.warn('No grades found for student:', studentId);
     }
 
     // === 生徒情報の表示 ===

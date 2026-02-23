@@ -113,18 +113,19 @@ function parseNewFormatCSV(text) {
             } else if (studentHeaderIndex !== -1 && line.includes(',')) {
                 // データ行
                 const values = CSVParser.parseCSVLine(line);
-                if (values.length >= 10) {
+                if (values.length >= 11) {
                     const student = {
-                        classroom: values[0],
-                        name: values[1],
-                        nameKana: values[2],
-                        gender: values[3],
-                        highSchool: values[4],
-                        courseSubject: values[5],
-                        schoolClass: values[6],
-                        club: values[7],
-                        targetUniversity: values[8],
-                        targetDept: values[9]
+                        studentCode: values[0],
+                        classroom: values[1],
+                        name: values[2],
+                        nameKana: values[3],
+                        gender: values[4],
+                        highSchool: values[5],
+                        courseSubject: values[6],
+                        schoolClass: values[7],
+                        club: values[8],
+                        targetUniversity: values[9],
+                        targetDept: values[10]
                     };
                     students.push(student);
                 }
@@ -205,28 +206,53 @@ async function saveData() {
     }
 
     try {
-        // ローカルストレージに保存
         const existingStudents = JSON.parse(localStorage.getItem('studentData')) || [];
         const existingGrades = JSON.parse(localStorage.getItem('gradeData')) || [];
 
-        // 新規生徒を追加（ID は自動生成）
         let maxStudentId = 0;
         existingStudents.forEach(s => {
             const idNum = parseInt(s.id?.replace('s', '') || '0');
             if (idNum > maxStudentId) maxStudentId = idNum;
         });
 
-        parsedStudentData.forEach((student, index) => {
-            const newStudent = {
-                id: `s${maxStudentId + index + 1}`,
-                ...student,
-                classId: 'class001', // デフォルト値
-                joinDate: new Date().toISOString().split('T')[0]
-            };
-            existingStudents.push(newStudent);
+        let addedCount = 0;
+        let updatedCount = 0;
+
+        // 生徒データを追加または更新
+        parsedStudentData.forEach((student) => {
+            const existingIndex = existingStudents.findIndex(s => s.studentCode === student.studentCode);
+
+            if (existingIndex !== -1) {
+                // 既存生徒を更新
+                existingStudents[existingIndex] = {
+                    ...existingStudents[existingIndex],
+                    classroom: student.classroom,
+                    name: student.name,
+                    nameKana: student.nameKana,
+                    gender: student.gender,
+                    highSchool: student.highSchool,
+                    courseSubject: student.courseSubject,
+                    schoolClass: student.schoolClass,
+                    club: student.club,
+                    targetUniversity: student.targetUniversity,
+                    targetDept: student.targetDept
+                };
+                updatedCount++;
+            } else {
+                // 新規生徒を追加
+                maxStudentId++;
+                const newStudent = {
+                    id: `s${maxStudentId}`,
+                    ...student,
+                    classId: 'class001',
+                    joinDate: new Date().toISOString().split('T')[0]
+                };
+                existingStudents.push(newStudent);
+                addedCount++;
+            }
         });
 
-        // テスト成績を追加（生徒ID でマッチング）
+        // テスト成績を追加
         let maxGradeId = 0;
         existingGrades.forEach(g => {
             const idNum = parseInt(g.id?.replace('g', '') || '0');
@@ -234,7 +260,6 @@ async function saveData() {
         });
 
         parsedGradeData.forEach((grade, index) => {
-            // 生徒名から生徒ID を検索
             const matchedStudent = existingStudents.find(s => s.name === grade.name);
             if (matchedStudent) {
                 const newGrade = {
@@ -265,16 +290,14 @@ async function saveData() {
             }
         });
 
-        // ローカルストレージに保存
         localStorage.setItem('studentData', JSON.stringify(existingStudents));
         localStorage.setItem('gradeData', JSON.stringify(existingGrades));
 
         console.log('Updated students:', existingStudents);
         console.log('Updated grades:', existingGrades);
 
-        showMessage(`✅ 生徒データ ${parsedStudentData.length} 件、テスト成績 ${parsedGradeData.length} 件を保存しました！`, 'success');
+        showMessage(`生徒データ 新規${addedCount}件、更新${updatedCount}件、テスト成績${parsedGradeData.length}件を保存しました`, 'success');
 
-        // リセット
         setTimeout(() => {
             clearFile();
             loadStudentsList();
