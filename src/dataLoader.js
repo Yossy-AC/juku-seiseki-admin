@@ -55,6 +55,10 @@ class DataLoader {
                 }
             }
 
+            // 講座情報を読み込む
+            const classesData = await this.loadJSON('../data/classes.json');
+            if (classesData) this.classes = classesData.classes || [];
+
             // 出席データを読み込む
             const attendanceData = await this.loadJSON('../data/attendance.json');
             if (attendanceData) this.attendance = attendanceData.attendance || [];
@@ -62,6 +66,7 @@ class DataLoader {
             console.log('All data loaded successfully');
             console.log('Students:', this.students);
             console.log('Grades:', this.grades);
+            console.log('Classes:', this.classes);
             return true;
         } catch (error) {
             console.error('Error loading all data:', error);
