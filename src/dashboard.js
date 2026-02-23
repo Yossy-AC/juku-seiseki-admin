@@ -74,20 +74,39 @@ function displayGradesTable(studentId, grades) {
     const tbody = document.getElementById('gradesTableBody');
     tbody.innerHTML = '';
 
+    if (grades.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">成績がまだありません</td></tr>';
+        return;
+    }
+
     grades.forEach(grade => {
-        const scorePercentage = Math.round((grade.score / grade.maxScore) * 100);
-        const classAverage = dataLoader.calculateClassAverage(
+        let scorePercentage, classAverage, difference, diffClass, diffSign;
+
+        // 新フォーマット（scores.totalが存在）
+        if (grade.scores && grade.scores.total !== undefined) {
+            scorePercentage = Math.round((grade.scores.total / grade.maxScores.total) * 100);
+        } else {
+            // 従来のフォーマット
+            scorePercentage = Math.round((grade.score / grade.maxScore) * 100);
+        }
+
+        classAverage = dataLoader.calculateClassAverage(
             dataLoader.getStudent(studentId).classId,
             grade.date
         );
-        const difference = scorePercentage - classAverage;
-        const diffClass = difference >= 0 ? 'positive' : 'negative';
-        const diffSign = difference >= 0 ? '+' : '';
+        difference = scorePercentage - classAverage;
+        diffClass = difference >= 0 ? 'positive' : 'negative';
+        diffSign = difference >= 0 ? '+' : '';
+
+        // 表示する成績を取得
+        const displayScore = grade.scores && grade.scores.total !== undefined 
+            ? `${grade.scores.total}/${grade.maxScores.total}`
+            : `${grade.score}/${grade.maxScore}`;
 
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${new Date(grade.date).toLocaleDateString('ja-JP')}</td>
-            <td>${grade.score}/${grade.maxScore}</td>
+            <td>${displayScore}</td>
             <td>${scorePercentage}%</td>
             <td>${classAverage}%</td>
             <td class="${diffClass}">${diffSign}${difference}%</td>
@@ -120,8 +139,24 @@ function displayAdvice(studentId, grades) {
     }
 
     const recentGrades = grades.slice(-3); // 最新3件
-    const recentAverage = recentGrades.reduce((sum, g) => sum + (g.score / g.maxScore * 100), 0) / recentGrades.length;
-    const prevAverage = grades.slice(0, -3).reduce((sum, g) => sum + (g.score / g.maxScore * 100), 0) / (grades.length - 3);
+    const recentScores = recentGrades.map(g => {
+        if (g.scores && g.scores.total !== undefined) {
+            return g.scores.total / g.maxScores.total * 100;
+        } else {
+            return g.score / g.maxScore * 100;
+        }
+    });
+    const recentAverage = recentScores.reduce((a, b) => a + b, 0) / recentScores.length;
+
+    const prevGrades = grades.slice(0, -3);
+    const prevScores = prevGrades.map(g => {
+        if (g.scores && g.scores.total !== undefined) {
+            return g.scores.total / g.maxScores.total * 100;
+        } else {
+            return g.score / g.maxScore * 100;
+        }
+    });
+    const prevAverage = prevScores.length > 0 ? prevScores.reduce((a, b) => a + b, 0) / prevScores.length : recentAverage;
 
     let advice = '';
 

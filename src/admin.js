@@ -164,19 +164,33 @@ function displayRecentGrades() {
     const tbody = document.getElementById('recentGradesTable');
     tbody.innerHTML = '';
 
+    // ローカルストレージから取得
+    const grades = JSON.parse(localStorage.getItem('gradeData')) || dataLoader.grades;
+
     // 最新20件を逆順で表示
-    const recent = dataLoader.grades.slice(-20).reverse();
+    const recent = grades.slice(-20).reverse();
     recent.forEach(grade => {
         const student = dataLoader.getStudent(grade.studentId);
+        if (!student) return;
+
         const classInfo = dataLoader.getClass(grade.classId);
-        const rate = Math.round((grade.score / grade.maxScore) * 100);
+        
+        // 新フォーマットと従来フォーマットに対応
+        let displayScore, rate;
+        if (grade.scores && grade.scores.total !== undefined) {
+            displayScore = `${grade.scores.total}/${grade.maxScores.total}`;
+            rate = Math.round((grade.scores.total / grade.maxScores.total) * 100);
+        } else {
+            displayScore = `${grade.score}/${grade.maxScore}`;
+            rate = Math.round((grade.score / grade.maxScore) * 100);
+        }
 
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${new Date(grade.date).toLocaleDateString('ja-JP')}</td>
             <td>${student.name}</td>
             <td>${classInfo.name}</td>
-            <td>${grade.score}/${grade.maxScore}</td>
+            <td>${displayScore}</td>
             <td>${rate}%</td>
         `;
         tbody.appendChild(row);
@@ -202,18 +216,37 @@ function handleGradesSubmit() {
         return;
     }
 
-    // 新規成績を追加（デモ用：ローカルのみ）
+    // ローカルストレージから取得（新フォーマットにも対応）
+    const grades = JSON.parse(localStorage.getItem('gradeData')) || [];
+
+    // 新規成績を追加（新フォーマット対応）
     const newGrade = {
         id: `g${Date.now()}`,
         studentId: studentId,
         classId: classId,
         date: date,
-        score: score,
-        maxScore: maxScore,
-        testName: testName
+        lessonNumber: grades.filter(g => g.studentId === studentId).length + 1,
+        lessonContent: testName,
+        scores: {
+            comprehension: 0,
+            unseenProblems: 0,
+            grammar: 0,
+            vocabulary: 0,
+            listening: 0,
+            total: score
+        },
+        maxScores: {
+            comprehension: maxScore / 5,
+            unseenProblems: maxScore / 5,
+            grammar: maxScore / 5,
+            vocabulary: maxScore / 5,
+            listening: maxScore / 5,
+            total: maxScore
+        }
     };
 
-    dataLoader.grades.push(newGrade);
+    grades.push(newGrade);
+    localStorage.setItem('gradeData', JSON.stringify(grades));
 
     alert('成績を追加しました（現在はデモ表示です。実装後はGitHubに保存されます）');
 

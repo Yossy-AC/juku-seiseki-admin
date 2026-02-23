@@ -31,21 +31,37 @@ class DataLoader {
     // すべてのデータを読み込む
     async loadAllData() {
         try {
-            // 相対パスを使用してJSONファイルを読み込む
-            const classesData = await this.loadJSON('../data/classes.json');
-            const studentsData = await this.loadJSON('../data/students.json');
-            const gradesData = await this.loadJSON('../data/grades.json');
-            const attendanceData = await this.loadJSON('../data/attendance.json');
+            // ローカルストレージから読み込む（優先）
+            const localStudents = JSON.parse(localStorage.getItem('studentData')) || null;
+            const localGrades = JSON.parse(localStorage.getItem('gradeData')) || null;
 
-            if (classesData) this.classes = classesData.classes || [];
-            if (studentsData) this.students = studentsData.students || [];
-            if (gradesData) {
-                this.grades = gradesData.grades || [];
-                this.mockExams = gradesData.mockExams || [];
+            // ローカルデータがあれば使用
+            if (localStudents) {
+                this.students = localStudents;
+            } else {
+                // JSONファイルから読み込む
+                const studentsData = await this.loadJSON('../data/students.json');
+                if (studentsData) this.students = studentsData.students || [];
             }
+
+            if (localGrades) {
+                this.grades = localGrades;
+            } else {
+                // JSONファイルから読み込む
+                const gradesData = await this.loadJSON('../data/grades.json');
+                if (gradesData) {
+                    this.grades = gradesData.grades || [];
+                    this.mockExams = gradesData.mockExams || [];
+                }
+            }
+
+            // 出席データを読み込む
+            const attendanceData = await this.loadJSON('../data/attendance.json');
             if (attendanceData) this.attendance = attendanceData.attendance || [];
 
             console.log('All data loaded successfully');
+            console.log('Students:', this.students);
+            console.log('Grades:', this.grades);
             return true;
         } catch (error) {
             console.error('Error loading all data:', error);
@@ -96,7 +112,12 @@ class DataLoader {
         if (relevantGrades.length === 0) return 0;
 
         const total = relevantGrades.reduce((sum, g) => {
-            return sum + (g.score / g.maxScore * 100);
+            // 新フォーマット対応
+            if (g.scores && g.scores.total !== undefined) {
+                return sum + (g.scores.total / g.maxScores.total * 100);
+            } else {
+                return sum + (g.score / g.maxScore * 100);
+            }
         }, 0);
 
         return Math.round(total / relevantGrades.length);
@@ -108,7 +129,12 @@ class DataLoader {
         if (studentGrades.length === 0) return 0;
 
         const total = studentGrades.reduce((sum, g) => {
-            return sum + (g.score / g.maxScore * 100);
+            // 新フォーマット対応
+            if (g.scores && g.scores.total !== undefined) {
+                return sum + (g.scores.total / g.maxScores.total * 100);
+            } else {
+                return sum + (g.score / g.maxScore * 100);
+            }
         }, 0);
 
         return Math.round(total / studentGrades.length);
