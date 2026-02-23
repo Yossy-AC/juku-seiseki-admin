@@ -1,0 +1,46 @@
+{
+  "attendance": [
+    {
+      "id": "a001",
+      "studentId": "s001",
+      "classId": "class001",
+      "date": "2026-02-16",
+      "status": "出席"
+    },
+    {
+      "id": "a002",
+      "studentId": "s001",
+      "classId": "class001",
+      "date": "2026-02-23",
+      "status": "出席"
+    },
+    {
+      "id": "a003",
+      "studentId": "s002",
+      "classId": "class001",
+      "date": "2026-02-16",
+      "status": "出席"
+    },
+    {
+      "id": "a004",
+      "studentId": "s002",
+      "classId": "class001",
+      "date": "2026-02-23",
+      "status": "欠席"
+    },
+    {
+      "id": "a005",
+      "studentId": "s003",
+      "classId": "class001",
+      "date": "2026-02-16",
+      "status": "遅刻"
+    },
+    {
+      "id": "a006",
+      "studentId": "s003",
+      "classId": "class001",
+      "date": "2026-02-23",
+      "status": "出席"
+    }
+  ]
+}

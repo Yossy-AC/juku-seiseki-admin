@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>塾 成績管理システム - 講師管理画面</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .admin-header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .nav-tabs button {
+            padding: 10px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs button.active {
+            border-bottom-color: #f5576c;
+            color: #f5576c;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-danger {
+            background: #f5576c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e3475c;
+        }
+
+        .class-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .summary-card h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .summary-card .number {
+            font-size: 32px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="admin-header">
+            <h1>👨‍🏫 講師管理画面</h1>
+            <p class="subtitle">成績・生徒情報の管理</p>
+        </header>
+
+        <main>
+            <!-- タブナビゲーション -->
+            <div class="nav-tabs">
+                <button class="tab-btn active" data-tab="dashboard">ダッシュボード</button>
+                <button class="tab-btn" data-tab="grades">成績入力</button>
+                <button class="tab-btn" data-tab="students">生徒管理</button>
+                <button class="tab-btn" data-tab="classes">講座管理</button>
+                <button class="tab-btn" data-tab="reports">レポート</button>
+            </div>
+
+            <!-- ダッシュボードタブ -->
+            <div id="dashboard" class="tab-content active">
+                <h2>📊 教室ダッシュボード</h2>
+                <div class="class-summary" id="classSummary">
+                    <!-- JavaScriptで動的に生成 -->
+                </div>
+            </div>
+
+            <!-- 成績入力タブ -->
+            <div id="grades" class="tab-content">
+                <h2>✏️ チェックテスト成績入力</h2>
+                <div class="card">
+                    <form id="gradesForm">
+                        <div class="form-group">
+                            <label>講座を選択</label>
+                            <select id="classSelect" required>
+                                <option value="">選択してください</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>生徒を選択</label>
+                            <select id="studentSelect" required>
+                                <option value="">講座を選択してから選んでください</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>テスト日</label>
+                            <input type="date" id="testDate" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>点数</label>
+                            <input type="number" id="score" min="0" required placeholder="点数を入力">
+                        </div>
+
+                        <div class="form-group">
+                            <label>満点</label>
+                            <input type="number" id="maxScore" min="1" value="100" required placeholder="満点を入力">
+                        </div>
+
+                        <div class="form-group">
+                            <label>テスト名</label>
+                            <input type="text" id="testName" placeholder="例: チェックテスト #5" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">成績を変更保存</button>
+                    </form>
+                </div>
+
+                <h3 style="margin-top: 30px;">最近の成績入力</h3>
+                <div id="recentGrades" class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>日付</th>
+                                <th>生徒名</th>
+                                <th>講座</th>
+                                <th>点数</th>
+                                <th>得点率</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentGradesTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 生徒管理タブ -->
+            <div id="students" class="tab-content">
+                <h2>👥 生徒管理</h2>
+                <div id="studentsList" class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>生徒ID</th>
+                                <th>名前</th>
+                                <th>所属講座</th>
+                                <th>入講日</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 講座管理タブ -->
+            <div id="classes" class="tab-content">
+                <h2>🏫 講座管理</h2>
+                <div id="classesList" class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>講座名</th>
+                                <th>曜日・時間</th>
+                                <th>定員</th>
+                                <th>在籍者数</th>
+                                <th>充足率</th>
+                            </tr>
+                        </thead>
+                        <tbody id="classesTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- レポートタブ -->
+            <div id="reports" class="tab-content">
+                <h2>📄 レポート</h2>
+                <div class="card">
+                    <h3>月間成績レポート生成</h3>
+                    <div class="form-group">
+                        <label>対象講座</label>
+                        <select id="reportClassSelect">
+                            <option value="">すべて</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary">PDF出力（準備中）</button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 塾成績管理システム</p>
+        </footer>
+    </div>
+
+    <script src="../src/dataLoader.js"></script>
+    <script src="../src/admin.js"></script>
+</body>
+</html>

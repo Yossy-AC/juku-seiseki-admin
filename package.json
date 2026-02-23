@@ -1,0 +1,18 @@
+{
+  "name": "juku-seiseki-admin",
+  "version": "0.1.0",
+  "description": "塾の成績管理システム - Cloudflare + JavaScript",
+  "main": "public/index.html",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "deploy": "wrangler deploy",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "education",
+    "grades",
+    "juku"
+  ],
+  "author": "",
+  "license": "MIT"
+}
