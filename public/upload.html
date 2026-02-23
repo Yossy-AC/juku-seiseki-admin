@@ -192,11 +192,14 @@
                     <h3>📋 使い方</h3>
                     <ul>
                         <li>1. テンプレートをダウンロード</li>
-                        <li>2. Excel で開いて、生徒情報を入力</li>
-                        <li>3. CSV形式で保存</li>
+                        <li>2. Excel で開いて、【生徒データ】【チェックテスト成績】を入力</li>
+                        <li>3. CSV形式で保存（UTF-8推奨）</li>
                         <li>4. 下のエリアにドラッグ＆ドロップ</li>
                         <li>5. 「保存」ボタンをクリック</li>
                     </ul>
+                    <p style="background: #fffbea; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                        <strong>📌 注意:</strong> 【生徒データ】と【チェックテスト成績】の2つのセクションが含まれている必要があります。
+                    </p>
                 </div>
 
                 <!-- ファイル入力エリア -->
@@ -214,10 +217,10 @@
                         <tr>
                             <th>氏名</th>
                             <th>高校</th>
-                            <th>性別</th>
-                            <th>学年</th>
+                            <th>学科</th>
                             <th>志望大学</th>
-                            <th>講座ID</th>
+                            <th>志望学部</th>
+                            <th>教室</th>
                         </tr>
                     </thead>
                     <tbody id="previewBody">
@@ -241,9 +244,10 @@
                             <tr>
                                 <th>氏名</th>
                                 <th>高校</th>
-                                <th>学年</th>
+                                <th>学科</th>
                                 <th>志望大学</th>
-                                <th>講座</th>
+                                <th>志望学部</th>
+                                <th>教室</th>
                             </tr>
                         </thead>
                         <tbody id="studentListBody">

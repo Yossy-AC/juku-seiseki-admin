@@ -4,73 +4,121 @@
       "id": "g001",
       "studentId": "s001",
       "classId": "class001",
-      "date": "2026-02-16",
-      "score": 78,
-      "maxScore": 100,
-      "testName": "チェックテスト #1"
+      "lessonNumber": 1,
+      "lessonContent": "文法基礎：時制",
+      "date": "2026-02-02",
+      "scores": {
+        "comprehension": 18,
+        "unseenProblems": 16,
+        "grammar": 19,
+        "vocabulary": 17,
+        "listening": 15,
+        "total": 85
+      },
+      "maxScores": {
+        "comprehension": 20,
+        "unseenProblems": 20,
+        "grammar": 20,
+        "vocabulary": 20,
+        "listening": 20,
+        "total": 100
+      }
     },
     {
       "id": "g002",
       "studentId": "s001",
       "classId": "class001",
-      "date": "2026-02-23",
-      "score": 82,
-      "maxScore": 100,
-      "testName": "チェックテスト #2"
+      "lessonNumber": 2,
+      "lessonContent": "長文読解：社会評論",
+      "date": "2026-02-09",
+      "scores": {
+        "comprehension": 19,
+        "unseenProblems": 18,
+        "grammar": 16,
+        "vocabulary": 19,
+        "listening": 17,
+        "total": 89
+      },
+      "maxScores": {
+        "comprehension": 20,
+        "unseenProblems": 20,
+        "grammar": 20,
+        "vocabulary": 20,
+        "listening": 20,
+        "total": 100
+      }
     },
     {
       "id": "g003",
-      "studentId": "s002",
+      "studentId": "s001",
       "classId": "class001",
+      "lessonNumber": 3,
+      "lessonContent": "文法応用：仮定法",
       "date": "2026-02-16",
-      "score": 85,
-      "maxScore": 100,
-      "testName": "チェックテスト #1"
+      "scores": {
+        "comprehension": 20,
+        "unseenProblems": 17,
+        "grammar": 20,
+        "vocabulary": 18,
+        "listening": 16,
+        "total": 91
+      },
+      "maxScores": {
+        "comprehension": 20,
+        "unseenProblems": 20,
+        "grammar": 20,
+        "vocabulary": 20,
+        "listening": 20,
+        "total": 100
+      }
     },
     {
       "id": "g004",
       "studentId": "s002",
       "classId": "class001",
-      "date": "2026-02-23",
-      "score": 88,
-      "maxScore": 100,
-      "testName": "チェックテスト #2"
+      "lessonNumber": 1,
+      "lessonContent": "文法基礎：時制",
+      "date": "2026-02-02",
+      "scores": {
+        "comprehension": 20,
+        "unseenProblems": 19,
+        "grammar": 20,
+        "vocabulary": 19,
+        "listening": 18,
+        "total": 96
+      },
+      "maxScores": {
+        "comprehension": 20,
+        "unseenProblems": 20,
+        "grammar": 20,
+        "vocabulary": 20,
+        "listening": 20,
+        "total": 100
+      }
     },
     {
       "id": "g005",
       "studentId": "s003",
       "classId": "class001",
-      "date": "2026-02-16",
-      "score": 72,
-      "maxScore": 100,
-      "testName": "チェックテスト #1"
-    },
-    {
-      "id": "g006",
-      "studentId": "s003",
-      "classId": "class001",
-      "date": "2026-02-23",
-      "score": 75,
-      "maxScore": 100,
-      "testName": "チェックテスト #2"
-    },
-    {
-      "id": "g007",
-      "studentId": "s004",
-      "classId": "class002",
-      "date": "2026-02-18",
-      "score": 68,
-      "maxScore": 100,
-      "testName": "チェックテスト #1"
-    },
-    {
-      "id": "g008",
-      "studentId": "s004",
-      "classId": "class002",
-      "date": "2026-02-25",
-      "score": 71,
-      "maxScore": 100,
-      "testName": "チェックテスト #2"
+      "lessonNumber": 1,
+      "lessonContent": "文法基礎：時制",
+      "date": "2026-02-02",
+      "scores": {
+        "comprehension": 15,
+        "unseenProblems": 14,
+        "grammar": 16,
+        "vocabulary": 13,
+        "listening": 12,
+        "total": 70
+      },
+      "maxScores": {
+        "comprehension": 20,
+        "unseenProblems": 20,
+        "grammar": 20,
+        "vocabulary": 20,
+        "listening": 20,
+        "total": 100
+      }
     }
   ],
   "mockExams": [

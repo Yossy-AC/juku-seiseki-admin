@@ -2,82 +2,47 @@
   "students": [
     {
       "id": "s001",
+      "classroom": "難関大クラス",
       "name": "田中太郎",
-      "highSchool": "県立第一高校",
+      "nameKana": "たなかたろう",
       "gender": "男",
-      "grade": "3",
+      "highSchool": "県立第一高校",
+      "courseSubject": "理系",
+      "schoolClass": "3-A",
+      "club": "英語スピーチ部",
       "targetUniversity": "東京大学",
+      "targetDept": "工学部",
       "classId": "class001",
       "joinDate": "2025-04-01"
     },
     {
       "id": "s002",
+      "classroom": "難関大クラス",
       "name": "鈴木花子",
-      "highSchool": "県立女子高校",
+      "nameKana": "すずきはなこ",
       "gender": "女",
-      "grade": "3",
+      "highSchool": "県立女子高校",
+      "courseSubject": "文系",
+      "schoolClass": "3-B",
+      "club": "演劇部",
       "targetUniversity": "京都大学",
+      "targetDept": "文学部",
       "classId": "class001",
       "joinDate": "2025-04-01"
     },
     {
       "id": "s003",
+      "classroom": "難関大クラス",
       "name": "佐藤次郎",
+      "nameKana": "さとうじろう",
+      "gender": "男",
       "highSchool": "私立東京高校",
-      "gender": "男",
-      "grade": "3",
+      "courseSubject": "理系",
+      "schoolClass": "3-C",
+      "club": "野球部",
       "targetUniversity": "大阪大学",
+      "targetDept": "医学部",
       "classId": "class001",
-      "joinDate": "2025-04-01"
-    },
-    {
-      "id": "s004",
-      "name": "伊藤美咲",
-      "highSchool": "県立第二高校",
-      "gender": "女",
-      "grade": "3",
-      "targetUniversity": "名古屋大学",
-      "classId": "class002",
-      "joinDate": "2025-04-01"
-    },
-    {
-      "id": "s005",
-      "name": "渡辺拓也",
-      "highSchool": "県立第三高校",
-      "gender": "男",
-      "grade": "3",
-      "targetUniversity": "北海道大学",
-      "classId": "class002",
-      "joinDate": "2025-04-01"
-    },
-    {
-      "id": "s006",
-      "name": "中村由美",
-      "highSchool": "県立第一高校",
-      "gender": "女",
-      "grade": "2",
-      "targetUniversity": "早稲田大学",
-      "classId": "class003",
-      "joinDate": "2025-04-01"
-    },
-    {
-      "id": "s007",
-      "name": "小林健太",
-      "highSchool": "私立進学高校",
-      "gender": "男",
-      "grade": "2",
-      "targetUniversity": "慶応大学",
-      "classId": "class004",
-      "joinDate": "2025-04-01"
-    },
-    {
-      "id": "s008",
-      "name": "高橋紗衣",
-      "highSchool": "県立高校",
-      "gender": "女",
-      "grade": "1",
-      "targetUniversity": "上智大学",
-      "classId": "class005",
       "joinDate": "2025-04-01"
     }
   ]

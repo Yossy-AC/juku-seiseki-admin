@@ -1,6 +1,7 @@
 // ===== ファイルアップロード処理 =====
 
-let parsedData = [];
+let parsedStudentData = [];
+let parsedGradeData = [];
 let currentFile = null;
 
 // ページ読み込み
@@ -50,121 +51,229 @@ async function handleFiles(files) {
         let csvText;
 
         if (file.name.endsWith('.csv')) {
-            // CSV ファイル
             csvText = await file.text();
         } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-            // Excel ファイル（警告）
-            alert('Excel ファイルは、Excel の「名前をつけて保存」で CSV 形式に保存してからアップロードしてください。\n\nステップ:\n1. ファイルを開く\n2. 「名前をつけて保存」\n3. ファイル形式を「CSV (カンマ区切り)」に選択\n4. このページにアップロード');
+            alert('Excel ファイルは、Excel の「名前をつけて保存」で CSV 形式に保存してからアップロードしてください。');
             return;
         } else {
             alert('CSV または Excel ファイルを選択してください');
             return;
         }
 
-        // CSV を解析
-        parsedData = CSVParser.parseCSV(csvText);
-        console.log('Parsed data:', parsedData);
+        // CSV を解析（新フォーマット対応）
+        const { students, grades } = parseNewFormatCSV(csvText);
+        
+        parsedStudentData = students;
+        parsedGradeData = grades;
 
-        // バリデーション
-        validateData(parsedData);
+        console.log('Parsed students:', parsedStudentData);
+        console.log('Parsed grades:', parsedGradeData);
 
         // プレビュー表示
-        displayPreview(parsedData);
+        displayPreview(parsedStudentData, parsedGradeData);
         document.getElementById('saveBtn').style.display = 'block';
 
         currentFile = file;
-        showMessage(`${parsedData.length} 件の生徒データが読み込まれました`, 'success');
+        showMessage(`生徒データ ${parsedStudentData.length} 件、テスト成績 ${parsedGradeData.length} 件が読み込まれました`, 'success');
     } catch (error) {
         console.error('Error:', error);
         showMessage(`エラー: ${error.message}`, 'error');
     }
 }
 
-// データの検証
-function validateData(data) {
-    const requiredFields = ['氏名', '高校', '性別', '学年', '志望大学', '講座ID'];
+// 新フォーマット CSV を解析
+function parseNewFormatCSV(text) {
+    const lines = text.trim().split('\n');
+    
+    let students = [];
+    let grades = [];
+    let currentSection = null;
+    let studentHeaderIndex = -1;
+    let gradeHeaderIndex = -1;
 
-    for (const row of data) {
-        for (const field of requiredFields) {
-            if (!row[field] || row[field].trim() === '') {
-                throw new Error(`${field}が入力されていない行があります`);
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+
+        if (line === '【生徒データ】セクション' || line === '【生徒データ】') {
+            currentSection = 'students';
+            continue;
+        } else if (line === '【チェックテスト成績】セクション' || line === '【チェックテスト成績】') {
+            currentSection = 'grades';
+            continue;
+        } else if (line === '') {
+            continue;
+        }
+
+        if (currentSection === 'students') {
+            if (line.includes(',') && studentHeaderIndex === -1) {
+                // ヘッダー行
+                const headers = CSVParser.parseCSVLine(line);
+                studentHeaderIndex = i;
+                continue;
+            } else if (studentHeaderIndex !== -1 && line.includes(',')) {
+                // データ行
+                const values = CSVParser.parseCSVLine(line);
+                if (values.length >= 10) {
+                    const student = {
+                        classroom: values[0],
+                        name: values[1],
+                        nameKana: values[2],
+                        gender: values[3],
+                        highSchool: values[4],
+                        courseSubject: values[5],
+                        schoolClass: values[6],
+                        club: values[7],
+                        targetUniversity: values[8],
+                        targetDept: values[9]
+                    };
+                    students.push(student);
+                }
+            }
+        } else if (currentSection === 'grades') {
+            if (line.includes(',') && gradeHeaderIndex === -1) {
+                // ヘッダー行
+                const headers = CSVParser.parseCSVLine(line);
+                gradeHeaderIndex = i;
+                continue;
+            } else if (gradeHeaderIndex !== -1 && line.includes(',')) {
+                // データ行
+                const values = CSVParser.parseCSVLine(line);
+                if (values.length >= 10) {
+                    const grade = {
+                        name: values[0],
+                        lessonNumber: parseInt(values[1]) || 0,
+                        lessonContent: values[2],
+                        date: values[3],
+                        comprehension: parseInt(values[4]) || 0,
+                        unseenProblems: parseInt(values[5]) || 0,
+                        grammar: parseInt(values[6]) || 0,
+                        vocabulary: parseInt(values[7]) || 0,
+                        listening: parseInt(values[8]) || 0,
+                        total: parseInt(values[9]) || 0
+                    };
+                    grades.push(grade);
+                }
             }
         }
-
-        // 学年は数字チェック
-        if (!/^[1-3]$/.test(row['学年'])) {
-            throw new Error(`学年は1, 2, 3のいずれかを入力してください`);
-        }
-
-        // 性別チェック
-        if (!['男', '女'].includes(row['性別'])) {
-            throw new Error(`性別は「男」または「女」を入力してください`);
-        }
     }
+
+    if (students.length === 0) {
+        throw new Error('【生徒データ】セクションが見つかるか、データが空です');
+    }
+
+    return { students, grades };
 }
 
 // プレビュー表示
-function displayPreview(data) {
+function displayPreview(students, grades) {
     const tbody = document.getElementById('previewBody');
     tbody.innerHTML = '';
 
-    data.slice(0, 10).forEach(row => {
+    // 生徒データ表示
+    students.slice(0, 5).forEach(student => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${row['氏名']}</td>
-            <td>${row['高校']}</td>
-            <td>${row['性別']}</td>
-            <td>${row['学年']}</td>
-            <td>${row['志望大学']}</td>
-            <td>${row['講座ID']}</td>
+            <td>${student.name}</td>
+            <td>${student.highSchool}</td>
+            <td>${student.gender}</td>
+            <td>${student.courseSubject}</td>
+            <td>${student.targetUniversity}</td>
+            <td>${student.targetDept}</td>
         `;
         tbody.appendChild(tr);
     });
 
-    document.getElementById('previewTable').classList.add('show');
+    if (students.length > 5) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="6" style="text-align: center; color: #999;">他 ${students.length - 5} 件</td>`;
+        tbody.appendChild(tr);
+    }
+
+    // テスト成績の簡単な概要を表示
+    if (grades.length > 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="6" style="background: #f0f0f0;"><strong>テスト成績: ${grades.length} 件</strong></td>`;
+        tbody.appendChild(tr);
+    }
 }
 
 // データを保存
 async function saveData() {
-    if (parsedData.length === 0) {
+    if (parsedStudentData.length === 0) {
         alert('データを読み込んでください');
         return;
     }
 
     try {
         // ローカルストレージに保存
-        const existingData = JSON.parse(localStorage.getItem('studentData')) || [];
-        const allData = [...existingData];
+        const existingStudents = JSON.parse(localStorage.getItem('studentData')) || [];
+        const existingGrades = JSON.parse(localStorage.getItem('gradeData')) || [];
 
         // 新規生徒を追加（ID は自動生成）
-        let maxId = 0;
-        allData.forEach(s => {
-            const idNum = parseInt(s.id.replace('s', ''));
-            if (idNum > maxId) maxId = idNum;
+        let maxStudentId = 0;
+        existingStudents.forEach(s => {
+            const idNum = parseInt(s.id?.replace('s', '') || '0');
+            if (idNum > maxStudentId) maxStudentId = idNum;
         });
 
-        parsedData.forEach((row, index) => {
+        parsedStudentData.forEach((student, index) => {
             const newStudent = {
-                id: `s${maxId + index + 1}`,
-                name: row['氏名'],
-                highSchool: row['高校'],
-                gender: row['性別'],
-                grade: row['学年'],
-                targetUniversity: row['志望大学'],
-                classId: row['講座ID'],
+                id: `s${maxStudentId + index + 1}`,
+                ...student,
+                classId: 'class001', // デフォルト値
                 joinDate: new Date().toISOString().split('T')[0]
             };
-            allData.push(newStudent);
+            existingStudents.push(newStudent);
+        });
+
+        // テスト成績を追加（生徒ID でマッチング）
+        let maxGradeId = 0;
+        existingGrades.forEach(g => {
+            const idNum = parseInt(g.id?.replace('g', '') || '0');
+            if (idNum > maxGradeId) maxGradeId = idNum;
+        });
+
+        parsedGradeData.forEach((grade, index) => {
+            // 生徒名から生徒ID を検索
+            const matchedStudent = existingStudents.find(s => s.name === grade.name);
+            if (matchedStudent) {
+                const newGrade = {
+                    id: `g${maxGradeId + index + 1}`,
+                    studentId: matchedStudent.id,
+                    classId: 'class001',
+                    lessonNumber: grade.lessonNumber,
+                    lessonContent: grade.lessonContent,
+                    date: grade.date,
+                    scores: {
+                        comprehension: grade.comprehension,
+                        unseenProblems: grade.unseenProblems,
+                        grammar: grade.grammar,
+                        vocabulary: grade.vocabulary,
+                        listening: grade.listening,
+                        total: grade.total
+                    },
+                    maxScores: {
+                        comprehension: 20,
+                        unseenProblems: 20,
+                        grammar: 20,
+                        vocabulary: 20,
+                        listening: 20,
+                        total: 100
+                    }
+                };
+                existingGrades.push(newGrade);
+            }
         });
 
         // ローカルストレージに保存
-        localStorage.setItem('studentData', JSON.stringify(allData));
-        
-        // data/students.json にもコピー（手動で GitHub に Push）
-        console.log('Updated students:', allData);
+        localStorage.setItem('studentData', JSON.stringify(existingStudents));
+        localStorage.setItem('gradeData', JSON.stringify(existingGrades));
 
-        showMessage(`✅ ${parsedData.length} 件の生徒データを保存しました！`, 'success');
-        
+        console.log('Updated students:', existingStudents);
+        console.log('Updated grades:', existingGrades);
+
+        showMessage(`✅ 生徒データ ${parsedStudentData.length} 件、テスト成績 ${parsedGradeData.length} 件を保存しました！`, 'success');
+
         // リセット
         setTimeout(() => {
             clearFile();
@@ -183,7 +292,8 @@ function clearFile() {
     document.getElementById('previewTable').classList.remove('show');
     document.getElementById('saveBtn').style.display = 'none';
     document.getElementById('message').classList.remove('show');
-    parsedData = [];
+    parsedStudentData = [];
+    parsedGradeData = [];
     currentFile = null;
 }
 
@@ -203,36 +313,22 @@ function loadStudentsList() {
     const data = JSON.parse(localStorage.getItem('studentData')) || [];
 
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">生徒がまだ登録されていません</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999;">生徒がまだ登録されていません</td></tr>';
         return;
     }
 
     data.forEach(student => {
         const tr = document.createElement('tr');
-        const classInfo = getClassNameById(student.classId); // 簡易版
         tr.innerHTML = `
             <td>${student.name}</td>
             <td>${student.highSchool}</td>
-            <td>${student.grade}</td>
+            <td>${student.courseSubject}</td>
             <td>${student.targetUniversity}</td>
-            <td>${classInfo || student.classId}</td>
+            <td>${student.targetDept}</td>
+            <td>${student.classroom}</td>
         `;
         tbody.appendChild(tr);
     });
-}
-
-// 講座名を取得（簡易版）
-function getClassNameById(classId) {
-    const classMap = {
-        'class001': '高3英語@難関大',
-        'class002': '高3英語@共通テスト',
-        'class003': '高2英語@標準',
-        'class004': '高2英語@発展',
-        'class005': '高1英語@基礎',
-        'class006': '高1英語@標準',
-        'class007': '英検対策'
-    };
-    return classMap[classId];
 }
 
 // テンプレートをダウンロード
@@ -240,3 +336,4 @@ function downloadTemplate() {
     const csv = CSVParser.generateTemplate();
     CSVParser.downloadCSV('生徒データテンプレート.csv', csv);
 }
+
