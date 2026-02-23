@@ -2,26 +2,42 @@
 
 // ページ読み込み時の処理
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('Dashboard loading...');
+    try {
+        console.log('Dashboard loading...');
+        alert('ダッシュボード読み込み始まります');
 
-    // データ読み込む
-    const loaded = await dataLoader.loadAllData();
-    if (!loaded) {
-        alert('データ読み込みエラーが発生しました');
-        return;
+        // データ読み込む
+        const loaded = await dataLoader.loadAllData();
+        console.log('Data loaded:', loaded);
+        
+        if (!loaded) {
+            const msg = 'データ読み込みエラーが発生しました';
+            console.error(msg);
+            alert(msg);
+            return;
+        }
+
+        console.log('Students:', dataLoader.students);
+        console.log('Grades:', dataLoader.grades);
+
+        // URLパラメータから生徒IDを取得（デモ用は最初の生徒を表示）
+        const urlParams = new URLSearchParams(window.location.search);
+        const studentId = urlParams.get('studentId') || dataLoader.students[0]?.id;
+
+        console.log('StudentId:', studentId);
+
+        if (!studentId) {
+            alert('生徒が見つかりません');
+            return;
+        }
+
+        // ダッシュボードを表示
+        displayDashboard(studentId);
+        alert('ダッシュボード読み込み完了');
+    } catch (error) {
+        console.error('Unexpected error:', error);
+        alert(`予期しないエラー: ${error.message}`);
     }
-
-    // URLパラメータから生徒IDを取得（デモ用は最初の生徒を表示）
-    const urlParams = new URLSearchParams(window.location.search);
-    const studentId = urlParams.get('studentId') || dataLoader.students[0]?.id;
-
-    if (!studentId) {
-        alert('生徒が見つかりません');
-        return;
-    }
-
-    // ダッシュボードを表示
-    displayDashboard(studentId);
 });
 
 // ダッシュボード表示関数

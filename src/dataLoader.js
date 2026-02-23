@@ -10,13 +10,20 @@ class DataLoader {
     // JSONファイルを取得
     async loadJSON(path) {
         try {
+            console.log(`Loading: ${path}`);
             const response = await fetch(path);
             if (!response.ok) {
-                throw new Error(`Failed to load ${path}: ${response.statusText}`);
+                const error = `Failed to load ${path}: ${response.statusText}`;
+                console.error(error);
+                alert(error);
+                throw new Error(error);
             }
-            return await response.json();
+            const data = await response.json();
+            console.log(`Loaded ${path}:`, data);
+            return data;
         } catch (error) {
             console.error(`Error loading ${path}:`, error);
+            alert(`データ読み込みエラー: ${path}\n${error.message}`);
             return null;
         }
     }

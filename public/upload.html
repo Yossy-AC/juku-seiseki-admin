@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生徒データアップロード</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .upload-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: #f9f9f9;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+        }
+
+        .upload-area:hover {
+            background: #f0f0f0;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e8e8ff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #ddd;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #ccc;
+        }
+
+        .preview-table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .preview-table th {
+            background: #667eea;
+            color: white;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .preview-table td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .preview-table.show {
+            display: table;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #4caf50;
+        }
+
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #f44336;
+        }
+
+        .instructions {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        .instructions ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin: 5px 0;
+        }
+
+        .template-download {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .template-download a {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .template-download a:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📥 生徒データアップロード</h1>
+            <p class="subtitle">Excel/CSV ファイルから生徒情報を一括登録</p>
+        </header>
+
+        <main>
+            <div class="upload-container">
+                <!-- テンプレートダウンロード -->
+                <div class="template-download">
+                    <p><strong>まずはこちらをダウンロード：</strong></p>
+                    <a href="#" onclick="downloadTemplate(); return false;">📊 テンプレート.csv をダウンロード</a>
+                </div>
+
+                <!-- 使い方説明 -->
+                <div class="instructions">
+                    <h3>📋 使い方</h3>
+                    <ul>
+                        <li>1. テンプレートをダウンロード</li>
+                        <li>2. Excel で開いて、生徒情報を入力</li>
+                        <li>3. CSV形式で保存</li>
+                        <li>4. 下のエリアにドラッグ＆ドロップ</li>
+                        <li>5. 「保存」ボタンをクリック</li>
+                    </ul>
+                </div>
+
+                <!-- ファイル入力エリア -->
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="fileInput" class="file-input" accept=".csv,.xlsx,.xls">
+                    <div class="upload-icon">📁</div>
+                    <p><strong>ファイルをドラッグ＆ドロップ</strong></p>
+                    <p>または クリックして選択</p>
+                    <small style="color: #999;">対応形式: CSV, Excel</small>
+                </div>
+
+                <!-- プレビュー表 -->
+                <table class="preview-table" id="previewTable">
+                    <thead>
+                        <tr>
+                            <th>氏名</th>
+                            <th>高校</th>
+                            <th>性別</th>
+                            <th>学年</th>
+                            <th>志望大学</th>
+                            <th>講座ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="previewBody">
+                    </tbody>
+                </table>
+
+                <!-- メッセージエリア -->
+                <div class="message" id="message"></div>
+
+                <!-- ボタン -->
+                <div class="btn-container">
+                    <button class="btn btn-secondary" onclick="clearFile()">キャンセル</button>
+                    <button class="btn btn-primary" id="saveBtn" style="display: none;" onclick="saveData()">保存</button>
+                </div>
+
+                <!-- データ蓄積一覧 -->
+                <div id="dataList" style="margin-top: 40px;">
+                    <h2>📊 登録済み生徒</h2>
+                    <table class="preview-table show" id="studentListTable">
+                        <thead>
+                            <tr>
+                                <th>氏名</th>
+                                <th>高校</th>
+                                <th>学年</th>
+                                <th>志望大学</th>
+                                <th>講座</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentListBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 塾成績管理システム</p>
+        </footer>
+    </div>
+
+    <script src="../src/csvParser.js"></script>
+    <script src="../src/uploadHandler.js"></script>
+</body>
+</html>
