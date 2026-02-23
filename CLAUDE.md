@@ -54,10 +54,10 @@ public/
 
 シングルトンパターン。グローバル `dataLoader` インスタンスとして利用。
 
-**データロード**: localStorage → JSON ファイルのフォールバック
+**データロード**: localStorage → JSON ファイルのフォールバック（students, grades, classes, attendance）
 
 **主要メソッド**:
-- `loadAllData()`: すべてのJSONを読み込む
+- `loadAllData()`: 生徒・成績・講座・出席データをすべて読み込む
 - `getStudent(id)`, `getClass(id)`: 単一レコード取得
 - `getStudentGrades(studentId)`: 生徒の成績を取得
 - `calculateClassAverage(classId)`: クラス平均を計算
