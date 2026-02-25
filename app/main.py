@@ -31,10 +31,7 @@ app.include_router(attendance.router, prefix="/api/attendance", tags=["attendanc
 app.include_router(upload.router, prefix="/api/upload", tags=["upload"])
 
 # アプリ起動時にDBテーブルを作成
-@app.on_event("startup")
-async def startup():
-    create_db_and_tables()
-    print("✓ Database initialized")
+create_db_and_tables()
 
 @app.get("/health")
 async def health_check():
