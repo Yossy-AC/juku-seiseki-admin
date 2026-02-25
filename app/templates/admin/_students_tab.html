@@ -1,4 +1,11 @@
 <div class="students-tab">
     <h2>生徒管理</h2>
-    <p>生徒管理画面は Phase 3 で実装予定です</p>
+
+    <div style="margin-bottom: 2rem;">
+        <button class="btn btn-primary" onclick="alert('生徒追加は Phase 3.5 で実装予定です')">新規生徒を追加</button>
+    </div>
+
+    <div hx-get="/api/students" hx-trigger="load">
+        <p style="color: #999;">生徒一覧を読み込み中...</p>
+    </div>
 </div>
