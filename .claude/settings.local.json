@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add CLAUDE.md)",
+      "Bash(git commit -m \"Update CLAUDE.md: add communication style and FastAPI migration status\")",
+      "Bash(git add -A)",
+      "Bash(git commit -m \"Phase 2: Implement grade_calculator.py and dynamic grades/attendance endpoints\")"
+    ]
+  }
+}

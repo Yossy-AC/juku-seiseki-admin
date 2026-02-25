@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}管理画面 - 塾成績管理システム{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <h1>管理画面</h1>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active"
+                hx-get="/admin/tabs/dashboard"
+                hx-target="#tab-content"
+                hx-swap="innerHTML">
+            ダッシュボード
+        </button>
+        <button class="tab-btn"
+                hx-get="/admin/tabs/grades"
+                hx-target="#tab-content"
+                hx-swap="innerHTML">
+            成績入力
+        </button>
+        <button class="tab-btn"
+                hx-get="/admin/tabs/students"
+                hx-target="#tab-content"
+                hx-swap="innerHTML">
+            生徒管理
+        </button>
+        <button class="tab-btn"
+                hx-get="/admin/tabs/classes"
+                hx-target="#tab-content"
+                hx-swap="innerHTML">
+            講座管理
+        </button>
+        <button class="tab-btn"
+                hx-get="/admin/tabs/upload"
+                hx-target="#tab-content"
+                hx-swap="innerHTML">
+            アップロード
+        </button>
+        <button class="tab-btn"
+                hx-get="/admin/tabs/reports"
+                hx-target="#tab-content"
+                hx-swap="innerHTML">
+            レポート
+        </button>
+        <span id="loading-indicator" class="htmx-indicator">読み込み中...</span>
+    </div>
+
+    <div id="tab-content">
+        <!-- Phase 3 で実装: 初期タブコンテンツがここに差し込まれる -->
+        <p>管理画面の実装は Phase 2-3 で進みます</p>
+    </div>
+</div>
+
+<style>
+    .admin-container {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .admin-container h1 {
+        margin-bottom: 2rem;
+        color: #333;
+    }
+
+    .nav-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #ddd;
+        flex-wrap: wrap;
+    }
+
+    .tab-btn {
+        padding: 0.75rem 1.5rem;
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        font-size: 1rem;
+        color: #666;
+        transition: all 0.3s ease;
+    }
+
+    .tab-btn:hover {
+        color: #333;
+        border-bottom-color: #ccc;
+    }
+
+    .tab-btn.active {
+        color: #0066cc;
+        border-bottom-color: #0066cc;
+    }
+
+    #loading-indicator {
+        display: none;
+        margin-left: auto;
+        color: #0066cc;
+        font-weight: bold;
+    }
+
+    .htmx-request #loading-indicator {
+        display: block;
+    }
+</style>
+{% endblock %}

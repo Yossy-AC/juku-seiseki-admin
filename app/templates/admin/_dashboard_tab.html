@@ -1,0 +1,67 @@
+<div class="dashboard-tab">
+    <h2>ダッシュボード</h2>
+    <div class="cards-grid">
+        <div class="card">
+            <h3>生徒数</h3>
+            <p class="card-value">3</p>
+            <p class="card-label">（サンプルデータ）</p>
+        </div>
+        <div class="card">
+            <h3>講座数</h3>
+            <p class="card-value">7</p>
+            <p class="card-label">（サンプルデータ）</p>
+        </div>
+        <div class="card">
+            <h3>成績レコード</h3>
+            <p class="card-value">7</p>
+            <p class="card-label">（チェックテスト+模試）</p>
+        </div>
+        <div class="card">
+            <h3>出席記録</h3>
+            <p class="card-value">6</p>
+            <p class="card-label">（サンプルデータ）</p>
+        </div>
+    </div>
+    <p style="margin-top: 2rem; color: #666;">
+        ※ Phase 1 では静的な表示です。Phase 2-3 で DB から動的に取得します。
+    </p>
+</div>
+
+<style>
+    .dashboard-tab h2 {
+        margin-bottom: 1.5rem;
+        color: #333;
+    }
+
+    .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .card-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0.5rem 0;
+    }
+
+    .card-label {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin: 0;
+    }
+</style>

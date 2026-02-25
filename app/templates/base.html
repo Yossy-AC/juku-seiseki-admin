@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}塾成績管理システム{% endblock %}</title>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe0NjP5+9Ngsy9SAJlsylVp4guJCOdKNLcO9" crossorigin="anonymous"></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+
+    <style>
+        /* HTMX インジケーター */
+        .htmx-indicator {
+            display: none;
+        }
+        .htmx-request .htmx-indicator {
+            display: inline;
+            color: #0066cc;
+            font-weight: bold;
+            margin-left: 1rem;
+        }
+
+        /* HTMX リクエスト中のスタイル */
+        .htmx-request .htmx-indicator.loading {
+            display: inline-block;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-title">塾成績管理</h1>
+            <ul class="nav-menu">
+                <li><a href="/admin">管理画面</a></li>
+                <li><a href="/dashboard/s001">ダッシュボード</a></li>
+                <li><a href="/upload">CSVアップロード</a></li>
+                <li><a href="/auth/logout" class="btn-logout">ログアウト</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 塾成績管理システム</p>
+    </footer>
+
+    <script>
+        // HTMX 設定
+        document.body.addEventListener('htmx:xhr:loadstart', function(evt) {
+            console.log('リクエスト開始');
+        });
+        document.body.addEventListener('htmx:xhr:loadend', function(evt) {
+            console.log('リクエスト完了');
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
