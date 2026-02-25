@@ -5,20 +5,20 @@
 ## 動作確認済み環境
 
 - Python 3.12+
-- Windows 10/11（Bash / WSL / Git Bash推奨）
+- Windows 10/11（Git Bash 推奨）
 
 ## 1. 初期設定（初回のみ）
 
 ```bash
-# リポジトリをクローン
+# リポジトリをクローン後
 cd Student-Manager
 
 # 環境ファイルを作成
 cp .env.example .env
+# .env を編集して SECRET_KEY と ADMIN_PASSWORD を設定
 
-# 依存関係をインストール
-pip install fastapi uvicorn[standard] sqlalchemy jinja2 python-multipart \
-            itsdangerous python-dotenv passlib[bcrypt] starlette
+# 依存関係をインストール（uv）
+uv sync
 ```
 
 ## 2. データベース初期化（初回のみ）
@@ -26,7 +26,7 @@ pip install fastapi uvicorn[standard] sqlalchemy jinja2 python-multipart \
 既存の JSON データを SQLite に移行：
 
 ```bash
-PYTHONIOENCODING=utf-8 python scripts/import_json.py
+PYTHONIOENCODING=utf-8 uv run python scripts/import_json.py
 ```
 
 出力例：
@@ -35,42 +35,28 @@ PYTHONIOENCODING=utf-8 python scripts/import_json.py
 ✓ 田中太郎
 ✓ 成績ID: g001
 ✓ 出席ID: a001
-✅ データ移行が完了しました
+データ移行が完了しました
 ```
 
 ## 3. 開発サーバー起動
 
-### 方法 A: Windows バッチファイル（推奨）
-
 ```bash
-# Windows コマンドプロンプトで実行
+# 推奨（Windows Git Bash）
+python -m uvicorn app.main:app --port 8000
+
+# uv 経由
+uv run uvicorn app.main:app --port 8000
+
+# Windows バッチファイル（自動プロセス終了付き）
 run.bat
 ```
 
-このバッチファイルは以下を自動で行います：
-- 古いプロセスを終了
-- UTF-8 エンコーディング設定
-- サーバー起動
+**注意**: Windows では `--reload` フラグで multiprocessing エラーが発生する場合があります。上記コマンドはリロードなし起動です。
 
-### 方法 B: Python スクリプト
-
-```bash
-python run.py
-```
-
-### 方法 C: 直接コマンド実行
-
-```bash
-cd /c/GitHub_StudentManager/Student-Manager
-PYTHONIOENCODING=utf-8 uvicorn app.main:app --port 8000
-```
-
-**注意**: Windows では `--reload` フラグを使用するとエラーが発生する場合があります。その場合は上記の方法 A または B を使用してください。
-
-出力例：
+起動確認：
 ```
 INFO:     Uvicorn running on http://127.0.0.1:8000
-INFO:     Application startup complete
+INFO:     Application startup complete.
 ```
 
 ## 4. ブラウザでアクセス
@@ -79,103 +65,88 @@ INFO:     Application startup complete
 |--------|-----|
 | ログイン画面 | http://localhost:8000/login |
 | 管理画面（要ログイン） | http://localhost:8000/admin |
+| 生徒ダッシュボード | http://localhost:8000/dashboard/s001 |
+| CSVアップロード | http://localhost:8000/upload |
 | ヘルスチェック | http://localhost:8000/health |
 
 ## 5. ログイン
 
-**デフォルトパスワード**（.env に記載）:
+`.env` に設定した `ADMIN_PASSWORD` でログインしてください。
+
+デフォルト（.env.example）:
 ```
 ADMIN_PASSWORD=your-admin-password-here
 ```
 
 ## トラブルシューティング
 
-### PermissionError: [WinError 5] アクセスが拒否されました
-
-**原因**: Windows での multiprocessing の問題
-
-**解決策**: 以下の方法で起動してください
-
-```bash
-# 方法 1: バッチファイル使用（推奨）
-run.bat
-
-# 方法 2: Python スクリプト使用
-python run.py
-
-# 方法 3: --reload なしで実行
-python -m uvicorn app.main:app --port 8000
-```
-
 ### ポート 8000 が使用中
 
 ```bash
-# 別のポート使用
 python -m uvicorn app.main:app --port 8001
 ```
 
-### Unicode エラー
+### uv コマンドが見つからない
 
 ```bash
-# UTF-8 エンコーディング指定（必須）
-PYTHONIOENCODING=utf-8 python scripts/import_json.py
+pip install uv
+python -m uv sync
+```
+
+その後は `python -m uv` を `uv` の代わりに使用してください。
+
+### Unicode エラー（import_json.py）
+
+```bash
+PYTHONIOENCODING=utf-8 uv run python scripts/import_json.py
+```
+
+### PermissionError: [WinError 5] アクセスが拒否されました
+
+`--reload` を外して起動してください：
+```bash
+python -m uvicorn app.main:app --port 8000
 ```
 
 ### 404 エラー（{"detail":"Not Found"}）
 
 - ブラウザキャッシュをクリア（Ctrl+Shift+Delete）
 - サーバーを再起動
-- 正しいポート（デフォルト 8000）でアクセス
-
-## エンドポイント確認
-
-```bash
-python << 'EOF'
-from fastapi.testclient import TestClient
-from app.main import app
-
-client = TestClient(app)
-response = client.get("/health")
-print(response.json())  # {'status': 'ok'}
-EOF
-```
+- ポートが合っているか確認
 
 ## 開発時便利なコマンド
 
 ```bash
-# コード修正時の自動リロード
-uvicorn app.main:app --reload
+# ヘルスチェック確認
+curl http://localhost:8000/health
+
+# APIドキュメント確認
+# http://localhost:8000/docs （FastAPI 自動生成）
 
 # ログレベル設定
-uvicorn app.main:app --log-level debug
-
-# バインドアドレス指定
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+python -m uvicorn app.main:app --log-level debug --port 8000
 ```
 
 ## 本番環境デプロイ
 
 詳細は [DEPLOYMENT.md](DEPLOYMENT.md) を参照してください。
 
-```bash
-# Railway へのデプロイ
-git push origin main
-# Railway ダッシュボードで自動デプロイ
-```
+環境変数（Railway ダッシュボードで設定）:
+- `SECRET_KEY` - セッション署名用ランダム文字列
+- `ADMIN_PASSWORD` - 管理画面ログインパスワード
+- `DATABASE_URL` - PostgreSQL URL（Railway が自動設定）
 
-## 次のステップ
+## 主な操作フロー
 
-1. **ローカル開発**
-   - `/admin` タブで生徒・成績データを管理
-   - `/upload` で CSV ファイルをインポート
-   - `/dashboard/s001` で生徒ダッシュボードを確認
+1. **生徒ダッシュボード**: `/dashboard/s001` → 生徒 ID を変えてアクセス
+2. **成績入力**: `/admin` → 成績入力タブ → 講座選択→生徒選択→点数入力
+3. **生徒追加**: `/admin` → 生徒管理タブ → 「新規生徒を追加」フォーム展開
+4. **CSVインポート**: `/upload` → ファイル選択→プレビュー確認→保存確定
+5. **CSVテンプレート**: `/api/upload/template` からダウンロード
 
-2. **Rails へのデプロイ**
-   - [DEPLOYMENT.md](DEPLOYMENT.md) の手順に従う
-   - 環境変数を設定（SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL）
-   - PostgreSQL プラグインを追加（本番環境推奨）
+## カスタマイズ
 
-3. **カスタマイズ**
-   - テンプレート編集: `app/templates/`
-   - ビジネスロジック: `app/services/`
-   - ルート設定: `app/routers/`
+- テンプレート編集: [app/templates/](app/templates/)
+- ビジネスロジック: [app/services/](app/services/)
+- ルート設定: [app/routers/](app/routers/)
+- スタイル: [static/css/styles.css](static/css/styles.css)

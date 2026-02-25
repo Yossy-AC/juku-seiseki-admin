@@ -12,167 +12,165 @@ Prohibited: greetings, prefaces, apologies, emojis/kaomoji.
 
 塾成績管理システム - 生徒向けダッシュボード、講師向け管理画面、CSV一括アップロード機能を持つWeb アプリケーション。
 
-- Student Dashboard: `public/index.html`（個人成績推移、クラス平均との比較）
-- Teacher Admin Panel: `public/admin.html`（成績入力、生徒・講座管理）
-- CSV Upload: `public/upload.html`（生徒・成績データの一括登録）
+- Student Dashboard: `/dashboard/{student_id}` （個人成績推移、クラス平均との比較）
+- Teacher Admin Panel: `/admin` （成績入力、生徒・講座管理、6タブ構成）
+- CSV Upload: `/upload` （生徒・成績データの一括登録）
 
-## Tech Stack (移行中)
+## Tech Stack (移行完了)
 
-**旧スタック** (src/, public/ ディレクトリ):
+**旧スタック** (src/, public/ ディレクトリ): 参照のみ、本番利用しない
 - Frontend: Vanilla JavaScript (ES6+), HTML5, CSS3
 - Data: JSON files + localStorage キャッシング
-- Deployment: Cloudflare Pages/Workers
-- Local Dev: Python http.server
 
-**新スタック** (app/ ディレクトリ、Phase 1〜6 実装中):
+**現行スタック** (app/ ディレクトリ):
 - Backend: FastAPI + Uvicorn
 - Frontend: HTMX + Jinja2 テンプレート
 - Data: SQLite/PostgreSQL + SQLAlchemy ORM
 - Package Manager: uv
-- Deployment: Railway/Render または Cloudflare Workers Python
-- Local Dev: `uv run uvicorn app.main:app --reload --port 8000`
+- Deployment: Railway/Render
+- Local Dev: `python -m uvicorn app.main:app --port 8000`
 
 ## Commands
 
 ```bash
-npm run dev        # http://localhost:8000 で開発サーバー起動
-npm run deploy     # Cloudflare へデプロイ
-npm test           # テスト（未実装）
+# 依存インストール（初回のみ）
+uv sync
+
+# DB 初期化（初回のみ）
+PYTHONIOENCODING=utf-8 python scripts/import_json.py
+
+# サーバー起動
+python -m uvicorn app.main:app --port 8000
+
+# Windows で自動再起動付き（Git Bash非推奨 → run.bat 使用）
+run.bat
 ```
 
 ## Architecture
 
-### ディレクトリ構成
+### ディレクトリ構成（現行スタック）
 
 ```
-src/
-├── dataLoader.js        # JSON読み込み、キャッシング、計算処理
-├── dashboard.js         # 生徒ダッシュボード
-├── admin.js             # 講師管理画面
-├── csvParser.js         # CSV解析
-└── uploadHandler.js     # CSV アップロード処理
+app/
+├── main.py              # FastAPI エントリーポイント
+├── config.py            # 環境変数 (SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL)
+├── database.py          # SQLAlchemy セッション・テーブル生成
+├── auth.py              # 認証ロジック (hmac.compare_digest)
+├── dependencies.py      # require_auth / is_authenticated 依存関数
+├── templates_config.py  # Jinja2Templates 共有インスタンス
+├── models/
+│   ├── class_.py        # Class テーブル
+│   ├── student.py       # Student テーブル
+│   ├── grade.py         # Grade テーブル（5科目スコア＋合計）
+│   └── attendance.py    # Attendance テーブル
+├── routers/
+│   ├── pages.py         # 画面遷移 (/, /login, /admin, /admin/tabs/{tab}, /dashboard/{id}, /upload)
+│   ├── auth.py          # POST /auth/login, POST /auth/logout
+│   ├── students.py      # GET/POST /api/students
+│   ├── grades.py        # GET/POST /api/grades, GET /api/grades/student/{id}, /comparison/{id}, /advice/{id}
+│   ├── classes.py       # GET /api/classes, GET /api/classes/{id}/students
+│   ├── attendance.py    # GET /api/attendance/student/{id}
+│   └── upload.py        # POST /api/upload/csv, POST /api/upload/save, GET /api/upload/template
+├── services/
+│   ├── grade_calculator.py  # 成績計算・クラス平均・出席率（8関数）
+│   └── csv_importer.py      # CSV解析・生徒IDマッチング・upsert保存
+└── templates/
+    ├── base.html
+    ├── login.html
+    ├── admin/          # 管理画面（6タブ）
+    ├── dashboard/      # 生徒ダッシュボード（4セクション）
+    ├── upload/
+    └── partials/       # HTMX 用 HTML 断片（grades_table, students_table 等 11ファイル）
 
-data/
-├── students.json        # 生徒データ
-├── grades.json          # 成績データ
-├── classes.json         # 講座情報
-└── attendance.json      # 出席記録
-
-public/
-├── index.html           # 生徒ダッシュボード
-├── admin.html           # 講師管理画面
-├── upload.html          # CSV アップロード
-└── styles.css           # スタイル
+static/css/styles.css    # スタイル（.htmx-indicator 含む）
+scripts/import_json.py   # data/*.json → SQLite 移行スクリプト
 ```
 
-### DataLoader（src/dataLoader.js）
+### データモデル
 
-シングルトンパターン。グローバル `dataLoader` インスタンスとして利用。
+**grades テーブルスコア列**: `score_comprehension`, `score_unseen`, `score_grammar`, `score_vocabulary`, `score_listening`, `score_total`（各科目 0-20、合計 0-100）
 
-**データロード**: localStorage → JSON ファイルのフォールバック（students, grades, classes, attendance）
+**students.id 採番**: `s001`, `s002`, ... 最大値+1 で自動採番
 
-**主要メソッド**:
-- `loadAllData()`: 生徒・成績・講座・出席データをすべて読み込む
-- `getStudent(id)`, `getClass(id)`: 単一レコード取得
-- `getStudentGrades(studentId)`: 生徒の成績を取得
-- `calculateClassAverage(classId)`: クラス平均を計算
-- `calculateStudentAverage(studentId)`: 生徒の平均を計算
-- `calculateAttendanceRate(studentId)`: 出席率を計算
+**grades.id 採番**: `g_{student_id}_{date}_{lesson_number}` 形式
 
-**データ形式**:
-```javascript
-// students.json
-{ "students": [{ id, name, classId, joinDate }, ...] }
+### CSV フォーマット
 
-// grades.json（新フォーマット）
-{
-  "grades": [{
-    id, studentId, classId, date, lessonNumber, lessonContent,
-    scores: { comprehension, unseenProblems, grammar, vocabulary, listening, total },
-    maxScores: { comprehension: 20, ..., total: 100 }
-  }, ...]
-}
-
-// attendance.json
-{ "attendance": [{ id, studentId, date, status }, ...] }
-```
-
-### UI
-
-**ダッシュボード**:
-- URL パラメータ `?studentId=s001` で生徒指定
-- DOMContentLoaded で dataLoader.loadAllData() 実行、ダッシュボード表示
-
-**管理画面**:
-- タブベースUI（`.tab-btn[data-tab]` で切り替え）
-- 講座選択時にフィルタリング
-
-**CSV アップロード**:
-- parseNewFormatCSV() で「【生徒データ】」「【チェックテスト成績】」セクションを自動判別
-- 生徒名でマッチング、成績を生徒ID にリンク
-- localStorage に保存（studentData, gradeData キー）
-
-## Key Details
-
-**CSV フォーマット**:
 ```
 【生徒データ】セクション
-教室,氏名,ｼﾒｲ,性,高校,学科,学校ｸﾗｽ,部活,志望大学,志望学部
+教室コード,教室,氏名,ｼﾒｲ,性,高校,学科,学校ｸﾗｽ,部活,志望大学,志望学部
 
 【チェックテスト成績】セクション
 氏名,授業回,授業内容,日付,授業内容の理解,初見問題,文法語法,単語,リスニング,合計
 ```
 
-**データ永続化**:
-- JSON ファイルが真実のソース
-- loadAllData() で一度読み込んでキャッシュ
-- ユーザー編集は localStorage に保存
-- 本番（Cloudflare D1）への永続化は Phase 2
+テンプレートダウンロード: GET `/api/upload/template`
 
-**グレード形式対応**:
-- 従来フォーマット: `{ score, maxScore }`
-- 新フォーマット: `{ scores: { total, ... }, maxScores: { total, ... } }`
-- 両形式を 0-100 スケールに正規化
+### HTMX パターン
 
-**エラーハンドリング**:
-- ネットワークエラー: alert + console.error
-- 欠損データ: null/空配列で安全に処理
-- URL パラメータ欠落: 最初の生徒にフォールバック
-
-## Development Notes
-
-- ビルドステップなし（ Vanilla JS）
-- 相対パスは `/public/` ディレクトリからアクセスを前提
-- localStorage キーは uploadHandler と dataLoader で一致させる必須
-- Cloudflare デプロイは wrangler CLI で認証が必要
-
-## Migration to FastAPI + HTMX + uv (進行中)
-
-### Status
-- **Phase 1**: ✅ 基盤セットアップ完了 (pyproject.toml, SQLAlchemy モデル, FastAPI ルーター, テンプレート)
-- **Phase 2**: ⏳ 生徒ダッシュボード HTMX 実装 (grade_calculator.py, 動的セクション)
-- **Phase 3**: ⏳ 管理画面 6タブ HTMX 実装
-- **Phase 4**: ⏳ CSV アップロード機能実装
-- **Phase 5**: ⏳ 認証機能実装 (セッション + パスワード)
-- **Phase 6**: ⏳ Railway デプロイ設定
-
-### Key Files for Migration
-- [app/main.py](app/main.py) - FastAPI エントリーポイント
-- [app/models/](app/models/) - SQLAlchemy モデル (student.py, grade.py, class_.py, attendance.py)
-- [app/routers/](app/routers/) - API エンドポイント定義
-- [app/templates/](app/templates/) - Jinja2 テンプレート + HTMX
-- [scripts/import_json.py](scripts/import_json.py) - JSON → SQLite 移行スクリプト
-- [PHASE1_SETUP.md](PHASE1_SETUP.md) - Phase 1 セットアップガイド
-
-### Setup
-```bash
-uv sync                              # 依存をインストール
-uv run python scripts/import_json.py # JSON データを SQLite に移行
-uv run uvicorn app.main:app --reload # 開発サーバー起動
+**タブ切り替え（管理画面）**:
+```html
+<button hx-get="/admin/tabs/grades" hx-target="#tab-content" hx-swap="innerHTML">成績入力</button>
 ```
 
-### Architecture
-- **DB**: SQLite (開発) → PostgreSQL (本番)
-- **テンプレート**: Jinja2 + HTMX で動的UI
-- **認証**: SessionMiddleware + bcrypt
-- **API**: /api/* で HTMX 用 HTML 断片、/admin/tabs/* でタブ切り替え
+**連鎖セレクト（講座→生徒）**:
+```html
+<select hx-get="/api/classes/{id}/students" hx-trigger="change" hx-target="#student-select">
+```
+
+**遅延ロード**:
+```html
+<section hx-get="/api/grades/comparison/{id}" hx-trigger="load" hx-swap="innerHTML">
+```
+
+### 認証フロー
+
+1. 未認証 → `/login` にリダイレクト
+2. POST `/auth/login` で `hmac.compare_digest(password, settings.ADMIN_PASSWORD)`
+3. セッション `authenticated=True` 設定
+4. `require_auth` 依存関数が全 /api/* と /admin エンドポイントを保護
+
+## Key Details
+
+**セキュリティ**:
+- パスワード比較: `hmac.compare_digest`（タイミング攻撃対策）
+- テンプレート: Jinja2 オートエスケープ（XSS対策）
+- エラー詳細: 外部には一般メッセージのみ、内部はログ出力
+- CSV プレビューキャッシュ: UUID キーをセッションに保存（外部改ざん防止）
+
+**環境変数** (.env):
+```
+SECRET_KEY=your-secret-key-here
+ADMIN_PASSWORD=your-admin-password-here
+DATABASE_URL=sqlite:///./student_manager.db
+```
+
+**Windows での起動注意**:
+- `--reload` フラグは Windows で multiprocessing エラーが発生する場合あり
+- 推奨: `python -m uvicorn app.main:app --port 8000`（リロードなし）
+- または: `run.bat`
+
+## Migration to FastAPI + HTMX + uv
+
+### Status（全フェーズ完了）
+
+- **Phase 1**: ✅ 基盤セットアップ (pyproject.toml, SQLAlchemy モデル, FastAPI ルーター, テンプレート)
+- **Phase 2**: ✅ 生徒ダッシュボード HTMX 実装 (grade_calculator.py, 動的セクション)
+- **Phase 3**: ✅ 管理画面 6タブ HTMX 実装 (成績入力, 生徒管理, 講座管理)
+- **Phase 4**: ✅ CSV アップロード機能 (csv_importer.py, プレビュー/保存ワークフロー)
+- **Phase 5**: ✅ 認証機能 (SessionMiddleware, hmac, require_auth)
+- **Phase 6**: ✅ Railway デプロイ設定 (railway.toml, Dockerfile, DEPLOYMENT.md)
+- **追加**: ✅ セキュリティ修正 (XSS対策, タイミング攻撃対策, エラー情報漏洩防止, templates_config.py分離, uv有効化)
+
+### Key Files
+
+- [app/main.py](app/main.py) - FastAPI エントリーポイント
+- [app/models/](app/models/) - SQLAlchemy モデル
+- [app/routers/](app/routers/) - API エンドポイント定義
+- [app/services/grade_calculator.py](app/services/grade_calculator.py) - 成績計算ロジック
+- [app/services/csv_importer.py](app/services/csv_importer.py) - CSV解析ロジック
+- [app/templates/](app/templates/) - Jinja2 テンプレート + HTMX
+- [app/templates_config.py](app/templates_config.py) - Jinja2Templates 共有インスタンス
+- [scripts/import_json.py](scripts/import_json.py) - JSON → SQLite 移行スクリプト
+- [QUICKSTART.md](QUICKSTART.md) - ローカル開発ガイド
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Railway デプロイガイド

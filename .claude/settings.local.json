@@ -6,7 +6,20 @@
       "Bash(git add -A)",
       "Bash(git commit -m \"Phase 2: Implement grade_calculator.py and dynamic grades/attendance endpoints\")",
       "Bash(git commit -m \"Phase 3: Implement admin panel tabs - grades input, students/classes management\")",
-      "Bash(git commit -m \"Phase 4: Implement CSV upload functionality with preview and save\")"
+      "Bash(git commit -m \"Phase 4: Implement CSV upload functionality with preview and save\")",
+      "Bash(git add app/auth.py app/dependencies.py app/main.py app/routers/*.py)",
+      "Bash(git commit:*)",
+      "Bash(ls -la README*)",
+      "Bash(git add railway.toml Dockerfile DEPLOYMENT.md .env.example)",
+      "Bash(pip install fastapi uvicorn[standard] sqlalchemy jinja2 python-multipart itsdangerous python-dotenv passlib[bcrypt] starlette -q)",
+      "Bash(python scripts/import_json.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python scripts/import_json.py)",
+      "Bash(timeout 10 uvicorn app.main:app --reload --port 8000)",
+      "Bash(timeout 10 uvicorn app.main:app --port 8000)",
+      "Bash(timeout 10 PYTHONIOENCODING=utf-8 python -c \"from app.main import app; import uvicorn; uvicorn.run\\(app, host=''127.0.0.1'', port=8000, log_level=''info''\\)\")",
+      "Bash(PYTHONIOENCODING=utf-8 timeout 10 python -c \"from app.main import app; import uvicorn; uvicorn.run\\(app, host=''127.0.0.1'', port=8000, log_level=''info''\\)\")",
+      "Bash(PYTHONIOENCODING=utf-8 timeout 10 python -c \"from app.main import app; import uvicorn; uvicorn.run\\(app, host=''127.0.0.1'', port=8001, log_level=''info''\\)\")",
+      "Bash(pip install httpx -q)"
     ]
   }
 }
