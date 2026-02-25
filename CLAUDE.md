@@ -2,6 +2,12 @@
 
 Guidance for working with this repository.
 
+## Communication Style
+
+Role: Dedicated engineer and assistant for a university prep school English teacher.
+Style: Conclusion first, concise, direct, no token waste.
+Prohibited: greetings, prefaces, apologies, emojis/kaomoji.
+
 ## Project
 
 塾成績管理システム - 生徒向けダッシュボード、講師向け管理画面、CSV一括アップロード機能を持つWeb アプリケーション。
@@ -10,12 +16,21 @@ Guidance for working with this repository.
 - Teacher Admin Panel: `public/admin.html`（成績入力、生徒・講座管理）
 - CSV Upload: `public/upload.html`（生徒・成績データの一括登録）
 
-## Tech Stack
+## Tech Stack (移行中)
 
+**旧スタック** (src/, public/ ディレクトリ):
 - Frontend: Vanilla JavaScript (ES6+), HTML5, CSS3
 - Data: JSON files + localStorage キャッシング
 - Deployment: Cloudflare Pages/Workers
 - Local Dev: Python http.server
+
+**新スタック** (app/ ディレクトリ、Phase 1〜6 実装中):
+- Backend: FastAPI + Uvicorn
+- Frontend: HTMX + Jinja2 テンプレート
+- Data: SQLite/PostgreSQL + SQLAlchemy ORM
+- Package Manager: uv
+- Deployment: Railway/Render または Cloudflare Workers Python
+- Local Dev: `uv run uvicorn app.main:app --reload --port 8000`
 
 ## Commands
 
@@ -130,3 +145,34 @@ public/
 - 相対パスは `/public/` ディレクトリからアクセスを前提
 - localStorage キーは uploadHandler と dataLoader で一致させる必須
 - Cloudflare デプロイは wrangler CLI で認証が必要
+
+## Migration to FastAPI + HTMX + uv (進行中)
+
+### Status
+- **Phase 1**: ✅ 基盤セットアップ完了 (pyproject.toml, SQLAlchemy モデル, FastAPI ルーター, テンプレート)
+- **Phase 2**: ⏳ 生徒ダッシュボード HTMX 実装 (grade_calculator.py, 動的セクション)
+- **Phase 3**: ⏳ 管理画面 6タブ HTMX 実装
+- **Phase 4**: ⏳ CSV アップロード機能実装
+- **Phase 5**: ⏳ 認証機能実装 (セッション + パスワード)
+- **Phase 6**: ⏳ Railway デプロイ設定
+
+### Key Files for Migration
+- [app/main.py](app/main.py) - FastAPI エントリーポイント
+- [app/models/](app/models/) - SQLAlchemy モデル (student.py, grade.py, class_.py, attendance.py)
+- [app/routers/](app/routers/) - API エンドポイント定義
+- [app/templates/](app/templates/) - Jinja2 テンプレート + HTMX
+- [scripts/import_json.py](scripts/import_json.py) - JSON → SQLite 移行スクリプト
+- [PHASE1_SETUP.md](PHASE1_SETUP.md) - Phase 1 セットアップガイド
+
+### Setup
+```bash
+uv sync                              # 依存をインストール
+uv run python scripts/import_json.py # JSON データを SQLite に移行
+uv run uvicorn app.main:app --reload # 開発サーバー起動
+```
+
+### Architecture
+- **DB**: SQLite (開発) → PostgreSQL (本番)
+- **テンプレート**: Jinja2 + HTMX で動的UI
+- **認証**: SessionMiddleware + bcrypt
+- **API**: /api/* で HTMX 用 HTML 断片、/admin/tabs/* でタブ切り替え
