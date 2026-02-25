@@ -1,0 +1,12 @@
+{% if students %}
+<select name="student_id" required style="width:100%; padding:0.75rem; border:1px solid #ddd; border-radius:4px;">
+    <option value="">生徒を選択</option>
+    {% for s in students %}
+    <option value="{{ s.id }}">{{ s.name }}</option>
+    {% endfor %}
+</select>
+{% else %}
+<select name="student_id" required disabled style="width:100%; padding:0.75rem; border:1px solid #ddd; border-radius:4px;">
+    <option value="">この講座に生徒がいません</option>
+</select>
+{% endif %}

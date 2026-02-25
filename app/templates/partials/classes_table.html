@@ -1,0 +1,24 @@
+{% if classes %}
+<table style="width:100%; border-collapse:collapse; margin-top:10px;">
+    <thead>
+        <tr style="background:#667eea; color:white;">
+            <th style="padding:10px; text-align:left;">講座名</th>
+            <th style="padding:10px; text-align:left;">曜日</th>
+            <th style="padding:10px; text-align:left;">時間</th>
+            <th style="padding:10px; text-align:center;">生徒数</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in classes %}
+        <tr style="border-bottom:1px solid #ddd;">
+            <td style="padding:10px;">{{ c.name }}</td>
+            <td style="padding:10px;">{{ c.day or '-' }}</td>
+            <td style="padding:10px;">{{ c.time or '-' }}</td>
+            <td style="padding:10px; text-align:center;">{{ c.students | length }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p style="color:#999;">講座が登録されていません</p>
+{% endif %}

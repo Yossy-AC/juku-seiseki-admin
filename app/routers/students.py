@@ -1,51 +1,77 @@
-from fastapi import APIRouter, Depends
+import logging
+from datetime import date as date_type
+from fastapi import APIRouter, Depends, Request, Form
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import require_auth
 from app.models.student import Student
-from app.models.class_ import Class
+from app.templates_config import templates
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
+
 @router.get("", response_class=HTMLResponse)
-async def list_students(db: Session = Depends(get_db), _: None = Depends(require_auth)):
+async def list_students(
+    request: Request,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_auth),
+):
     """生徒一覧（HTMX用）"""
-    students = db.query(Student).all()
+    students = db.query(Student).order_by(Student.name).all()
+    return templates.TemplateResponse(
+        "partials/students_table.html",
+        {"request": request, "students": students},
+    )
 
-    if not students:
-        return "<p>生徒が登録されていません</p>"
-
-    rows = "".join([
-        f"""<tr style="border-bottom: 1px solid #ddd;">
-            <td style="padding: 10px;">{s.name}</td>
-            <td style="padding: 10px;">{s.name_kana or '-'}</td>
-            <td style="padding: 10px;">{s.target_university or '-'}</td>
-            <td style="padding: 10px;">{s.target_dept or '-'}</td>
-            <td style="padding: 10px; text-align: center;">{s.gender or '-'}</td>
-        </tr>"""
-        for s in students
-    ])
-
-    return f"""
-    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-        <thead>
-            <tr style="background: #667eea; color: white;">
-                <th style="padding: 10px; text-align: left;">氏名</th>
-                <th style="padding: 10px; text-align: left;">ふりがな</th>
-                <th style="padding: 10px; text-align: left;">志望大学</th>
-                <th style="padding: 10px; text-align: left;">志望学部</th>
-                <th style="padding: 10px; text-align: center;">性別</th>
-            </tr>
-        </thead>
-        <tbody>
-            {rows}
-        </tbody>
-    </table>
-    """
 
 @router.post("", response_class=HTMLResponse)
-async def create_student(db: Session = Depends(get_db), _: None = Depends(require_auth)):
+async def create_student(
+    request: Request,
+    name: str = Form(...),
+    name_kana: str = Form(""),
+    gender: str = Form(""),
+    high_school: str = Form(""),
+    target_university: str = Form(""),
+    target_dept: str = Form(""),
+    class_id: str = Form(""),
+    db: Session = Depends(get_db),
+    _: None = Depends(require_auth),
+):
     """生徒追加（HTMX用）"""
-    return "<p>生徒追加は Phase 3 後期で実装予定</p>"
+    try:
+        # ID 自動採番（最大の数値 + 1）
+        max_id = 0
+        for s in db.query(Student).all():
+            try:
+                num = int(s.id.lstrip("s"))
+                if num > max_id:
+                    max_id = num
+            except ValueError:
+                pass
+        new_id = f"s{max_id + 1:03d}"
+
+        new_student = Student(
+            id=new_id,
+            name=name,
+            name_kana=name_kana or None,
+            gender=gender or None,
+            high_school=high_school or None,
+            target_university=target_university or None,
+            target_dept=target_dept or None,
+            class_id=class_id or None,
+            join_date=date_type.today(),
+        )
+        db.add(new_student)
+        db.commit()
+
+        students = db.query(Student).order_by(Student.name).all()
+        return templates.TemplateResponse(
+            "partials/students_table.html",
+            {"request": request, "students": students},
+        )
+    except Exception as e:
+        logger.error("Student create error: %s", e, exc_info=True)
+        return "<p style='color:#c62828;'>保存中にエラーが発生しました</p>"

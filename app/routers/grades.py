@@ -1,113 +1,161 @@
-from fastapi import APIRouter, Depends
+import logging
+from datetime import date as date_type
+from fastapi import APIRouter, Depends, Request, Form
 from fastapi.responses import HTMLResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import require_auth
+from app.models.grade import Grade
 from app.models.student import Student
+from app.templates_config import templates
 from app.services.grade_calculator import (
     get_student_grades,
     calculate_student_average,
     calculate_class_average,
-    generate_advice
+    generate_advice,
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
+
+@router.get("", response_class=HTMLResponse)
+async def list_grades(
+    request: Request,
+    limit: int = None,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_auth),
+):
+    """最近の成績一覧（管理画面用）"""
+    query = db.query(Grade).order_by(Grade.date.desc())
+    if limit:
+        query = query.limit(limit)
+    grades = query.all()
+    return templates.TemplateResponse(
+        "partials/grades_table.html",
+        {"request": request, "grades": grades},
+    )
+
+
 @router.get("/student/{student_id}", response_class=HTMLResponse)
-async def get_student_grades_html(student_id: str, db: Session = Depends(get_db), _: None = Depends(require_auth)):
+async def get_student_grades_html(
+    student_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_auth),
+):
     """生徒別成績テーブル（HTMX用）"""
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
         return "<p>生徒が見つかりません</p>"
-
     grades = get_student_grades(db, student_id)
+    return templates.TemplateResponse(
+        "partials/grades_table.html",
+        {"request": request, "grades": grades},
+    )
 
-    if not grades:
-        return "<p>成績データがありません</p>"
-
-    # HTML テーブル生成
-    rows = "".join([
-        f"""<tr style="border-bottom: 1px solid #ddd;">
-            <td style="padding: 10px;">{grade.date}</td>
-            <td style="padding: 10px;">{grade.lesson_content or '-'}</td>
-            <td style="padding: 10px; text-align: center;">{grade.score_comprehension}/{grade.max_comprehension}</td>
-            <td style="padding: 10px; text-align: center;">{grade.score_unseen}/{grade.max_unseen}</td>
-            <td style="padding: 10px; text-align: center;">{grade.score_grammar}/{grade.max_grammar}</td>
-            <td style="padding: 10px; text-align: center;">{grade.score_vocabulary}/{grade.max_vocabulary}</td>
-            <td style="padding: 10px; text-align: center;">{grade.score_listening}/{grade.max_listening}</td>
-            <td style="padding: 10px; text-align: center; font-weight: bold;">{grade.score_total}/{grade.max_total}</td>
-        </tr>"""
-        for grade in grades
-    ])
-
-    return f"""
-    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-        <thead>
-            <tr style="background: #667eea; color: white;">
-                <th style="padding: 10px; text-align: left;">日付</th>
-                <th style="padding: 10px; text-align: left;">授業内容</th>
-                <th style="padding: 10px; text-align: center;">理解</th>
-                <th style="padding: 10px; text-align: center;">初見</th>
-                <th style="padding: 10px; text-align: center;">文法</th>
-                <th style="padding: 10px; text-align: center;">単語</th>
-                <th style="padding: 10px; text-align: center;">リスニング</th>
-                <th style="padding: 10px; text-align: center;">合計</th>
-            </tr>
-        </thead>
-        <tbody>
-            {rows}
-        </tbody>
-    </table>
-    """
 
 @router.get("/comparison/{student_id}", response_class=HTMLResponse)
-async def get_comparison(student_id: str, db: Session = Depends(get_db), _: None = Depends(require_auth)):
+async def get_comparison(
+    student_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_auth),
+):
     """クラス平均比較（HTMX用）"""
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
         return "<p>生徒が見つかりません</p>"
-
     student_avg = calculate_student_average(db, student_id)
     class_avg = calculate_class_average(db, student.class_id) if student.class_id else 0
     difference = student_avg - class_avg
+    return templates.TemplateResponse(
+        "partials/comparison.html",
+        {
+            "request": request,
+            "student_avg": student_avg,
+            "class_avg": class_avg,
+            "difference": abs(difference),
+            "difference_color": "#2e7d32" if difference >= 0 else "#c62828",
+            "difference_sign": "+" if difference >= 0 else "-",
+        },
+    )
 
-    difference_color = "#2e7d32" if difference >= 0 else "#c62828"
-    difference_sign = "+" if difference >= 0 else ""
-
-    return f"""
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-        <div style="background: #f0f0f0; padding: 1rem; border-radius: 8px; text-align: center;">
-            <p style="margin: 0; font-size: 0.9rem; color: #666;">あなたの平均</p>
-            <p style="margin: 0.5rem 0 0 0; font-size: 2rem; font-weight: bold; color: #667eea;">{student_avg}点</p>
-        </div>
-        <div style="background: #f0f0f0; padding: 1rem; border-radius: 8px; text-align: center;">
-            <p style="margin: 0; font-size: 0.9rem; color: #666;">クラス平均</p>
-            <p style="margin: 0.5rem 0 0 0; font-size: 2rem; font-weight: bold; color: #666;">{class_avg}点</p>
-        </div>
-        <div style="background: #f0f0f0; padding: 1rem; border-radius: 8px; text-align: center;">
-            <p style="margin: 0; font-size: 0.9rem; color: #666;">差（クラス比）</p>
-            <p style="margin: 0.5rem 0 0 0; font-size: 2rem; font-weight: bold; color: {difference_color};">{difference_sign}{difference}点</p>
-        </div>
-    </div>
-    """
 
 @router.get("/advice/{student_id}", response_class=HTMLResponse)
-async def get_advice(student_id: str, db: Session = Depends(get_db), _: None = Depends(require_auth)):
+async def get_advice(
+    student_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_auth),
+):
     """学習アドバイス（HTMX用）"""
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
         return "<p>生徒が見つかりません</p>"
-
     advice = generate_advice(db, student_id)
+    return templates.TemplateResponse(
+        "partials/advice.html",
+        {"request": request, "advice": advice},
+    )
 
-    return f"""
-    <div style="border-left: 4px solid #667eea; background: #f8f9fa; padding: 1rem; border-radius: 8px;">
-        <p style="line-height: 1.8; color: #555; margin: 0;">{advice}</p>
-    </div>
-    """
 
 @router.post("", response_class=HTMLResponse)
-async def create_grade(db: Session = Depends(get_db), _: None = Depends(require_auth)):
+async def create_grade(
+    request: Request,
+    student_id: str = Form(...),
+    class_id: str = Form(...),
+    date: str = Form(...),
+    lesson_content: str = Form(""),
+    score_comprehension: int = Form(0),
+    score_unseen: int = Form(0),
+    score_grammar: int = Form(0),
+    score_vocabulary: int = Form(0),
+    score_listening: int = Form(0),
+    db: Session = Depends(get_db),
+    _: None = Depends(require_auth),
+):
     """成績入力（HTMX用）"""
-    return "<p>成績入力は Phase 3 で実装予定</p>"
+    try:
+        # lesson_number 自動採番（その生徒の最大 + 1）
+        max_lesson = (
+            db.query(func.max(Grade.lesson_number))
+            .filter(Grade.student_id == student_id)
+            .scalar()
+        )
+        lesson_number = (max_lesson or 0) + 1
+
+        score_total = (
+            score_comprehension + score_unseen + score_grammar
+            + score_vocabulary + score_listening
+        )
+        grade_id = f"g_{student_id}_{date}_{lesson_number}"
+
+        new_grade = Grade(
+            id=grade_id,
+            student_id=student_id,
+            class_id=class_id,
+            date=date,
+            lesson_number=lesson_number,
+            lesson_content=lesson_content,
+            score_comprehension=score_comprehension,
+            score_unseen=score_unseen,
+            score_grammar=score_grammar,
+            score_vocabulary=score_vocabulary,
+            score_listening=score_listening,
+            score_total=score_total,
+        )
+        db.add(new_grade)
+        db.commit()
+
+        # 最近5件を返す
+        grades = db.query(Grade).order_by(Grade.date.desc()).limit(5).all()
+        return templates.TemplateResponse(
+            "partials/grades_table.html",
+            {"request": request, "grades": grades},
+        )
+    except Exception as e:
+        logger.error("Grade create error: %s", e, exc_info=True)
+        return "<p style='color:#c62828;'>保存中にエラーが発生しました</p>"

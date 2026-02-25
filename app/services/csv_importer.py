@@ -10,6 +10,7 @@ import io
 from sqlalchemy.orm import Session
 from app.models.student import Student
 from app.models.grade import Grade
+from app.models.class_ import Class
 
 
 def parse_csv_line(line: str) -> List[str]:
@@ -175,62 +176,6 @@ def match_grades_to_students(
     return matched_grades
 
 
-def generate_preview_html(
-    students_with_ids: List[Tuple[Dict, str]],
-    matched_grades: List[Tuple[Dict, str]]
-) -> str:
-    """
-    プレビューHTML を生成
-    """
-    preview_students = students_with_ids[:5]
-    remaining = len(students_with_ids) - 5 if len(students_with_ids) > 5 else 0
-
-    rows = ""
-    for student, student_id in preview_students:
-        rows += f"""
-        <tr style="border-bottom: 1px solid #ddd;">
-            <td style="padding: 10px;">{student['name']}</td>
-            <td style="padding: 10px;">{student.get('high_school', '-')}</td>
-            <td style="padding: 10px;">{student.get('gender', '-')}</td>
-            <td style="padding: 10px;">{student.get('course_subject', '-')}</td>
-            <td style="padding: 10px;">{student.get('target_university', '-')}</td>
-            <td style="padding: 10px;">{student.get('target_dept', '-')}</td>
-        </tr>
-        """
-
-    if remaining > 0:
-        rows += f"""
-        <tr style="background: #f0f0f0;">
-            <td colspan="6" style="padding: 10px; text-align: center; color: #999;">他 {remaining} 件</td>
-        </tr>
-        """
-
-    if matched_grades:
-        rows += f"""
-        <tr style="background: #f0f0f0;">
-            <td colspan="6" style="padding: 10px;"><strong>テスト成績: {len(matched_grades)} 件</strong></td>
-        </tr>
-        """
-
-    return f"""
-    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-        <thead>
-            <tr style="background: #667eea; color: white;">
-                <th style="padding: 10px; text-align: left;">氏名</th>
-                <th style="padding: 10px; text-align: left;">高校</th>
-                <th style="padding: 10px; text-align: center;">性別</th>
-                <th style="padding: 10px; text-align: left;">文系/理系</th>
-                <th style="padding: 10px; text-align: left;">志望大学</th>
-                <th style="padding: 10px; text-align: left;">志望学部</th>
-            </tr>
-        </thead>
-        <tbody>
-            {rows}
-        </tbody>
-    </table>
-    """
-
-
 def save_csv_data(
     db: Session,
     students_with_ids: List[Tuple[Dict, str]],
@@ -273,7 +218,9 @@ def save_csv_data(
                 existing.target_dept = student['target_dept']
                 results["updated_students"] += 1
             else:
-                # 新規生徒を追加
+                # 新規生徒を追加（CSV の student_code から講座を検索）
+                student_code = student.get('student_code', '')
+                class_obj = db.query(Class).filter(Class.id == student_code).first()
                 new_student = Student(
                     id=student_id,
                     name=student['name'],
@@ -286,7 +233,7 @@ def save_csv_data(
                     club=student['club'],
                     target_university=student['target_university'],
                     target_dept=student['target_dept'],
-                    class_id='c001',  # デフォルト講座
+                    class_id=class_obj.id if class_obj else None,
                     join_date=date.today()
                 )
                 db.add(new_student)
@@ -316,11 +263,12 @@ def save_csv_data(
                 existing_grade.score_listening = grade['listening']
                 existing_grade.score_total = grade['total']
             else:
-                # 新規成績を追加
+                # 新規成績を追加（生徒の所属講座を使用）
+                student_obj = db.query(Student).filter(Student.id == student_id).first()
                 new_grade = Grade(
                     id=f"g_{student_id}_{grade['date']}_{grade['lesson_number']}",
                     student_id=student_id,
-                    class_id='c001',
+                    class_id=student_obj.class_id if student_obj else None,
                     date=grade['date'],
                     lesson_number=grade['lesson_number'],
                     lesson_content=grade['lesson_content'],

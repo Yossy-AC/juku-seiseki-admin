@@ -1,11 +1,62 @@
 <div class="students-tab">
     <h2>生徒管理</h2>
 
-    <div style="margin-bottom: 2rem;">
-        <button class="btn btn-primary" onclick="alert('生徒追加は Phase 3.5 で実装予定です')">新規生徒を追加</button>
-    </div>
+    <!-- 生徒追加フォーム -->
+    <details style="margin-bottom:2rem; background:white; padding:1.5rem; border-radius:8px;">
+        <summary style="cursor:pointer; font-weight:bold; color:#667eea; user-select:none;">+ 新規生徒を追加</summary>
 
-    <div hx-get="/api/students" hx-trigger="load">
-        <p style="color: #999;">生徒一覧を読み込み中...</p>
+        <form hx-post="/api/students"
+              hx-target="#students-list"
+              hx-swap="innerHTML"
+              style="margin-top:1.5rem;">
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div class="form-group">
+                    <label>氏名 <span style="color:#c62828;">*</span></label>
+                    <input type="text" name="name" required
+                           style="width:100%; padding:0.75rem; border:1px solid #ddd; border-radius:4px;">
+                </div>
+                <div class="form-group">
+                    <label>ふりがな</label>
+                    <input type="text" name="name_kana"
+                           style="width:100%; padding:0.75rem; border:1px solid #ddd; border-radius:4px;">
+                </div>
+                <div class="form-group">
+                    <label>性別</label>
+                    <select name="gender" style="width:100%; padding:0.75rem; border:1px solid #ddd; border-radius:4px;">
+                        <option value="">未設定</option>
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>高校</label>
+                    <input type="text" name="high_school"
+                           style="width:100%; padding:0.75rem; border:1px solid #ddd; border-radius:4px;">
+                </div>
+                <div class="form-group">
+                    <label>志望大学</label>
+                    <input type="text" name="target_university"
+                           style="width:100%; padding:0.75rem; border:1px solid #ddd; border-radius:4px;">
+                </div>
+                <div class="form-group">
+                    <label>志望学部</label>
+                    <input type="text" name="target_dept"
+                           style="width:100%; padding:0.75rem; border:1px solid #ddd; border-radius:4px;">
+                </div>
+                <div class="form-group">
+                    <label>所属講座ID</label>
+                    <input type="text" name="class_id" placeholder="例: c001"
+                           style="width:100%; padding:0.75rem; border:1px solid #ddd; border-radius:4px;">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="margin-top:1.5rem;">追加する</button>
+        </form>
+    </details>
+
+    <!-- 生徒一覧 -->
+    <div id="students-list" hx-get="/api/students" hx-trigger="load">
+        <p style="color:#999;">生徒一覧を読み込み中...</p>
     </div>
 </div>

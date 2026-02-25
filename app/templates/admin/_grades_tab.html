@@ -11,10 +11,11 @@
             <div class="form-group">
                 <label>講座を選択</label>
                 <select name="class_id" required
-                        hx-get="/api/classes/{value}/students"
+                        hx-get="/api/classes//students"
                         hx-trigger="change"
                         hx-target="#student-select-container"
-                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
+                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;"
+                        onchange="this.setAttribute('hx-get', '/api/classes/' + this.value + '/students')">
                     <option value="">選択してください</option>
                     <option value="c001">高3英語@難関大</option>
                     <option value="c002">高2数学基礎</option>
