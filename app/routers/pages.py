@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 import os
 
@@ -9,35 +9,38 @@ router = APIRouter()
 templates_dir = os.path.join(os.path.dirname(__file__), "..", "templates")
 templates = Jinja2Templates(directory=templates_dir)
 
+def require_auth_check(request: Request) -> bool:
+    """セッション認証チェック"""
+    return request.session.get("authenticated", False)
+
 @router.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     """ルートページ: ログイン状態により振り分け"""
-    # Phase 5（認証機能）の実装時にセッションチェックを追加
-    # 現在は /admin にリダイレクト
-    return """
-    <html>
-        <head><title>リダイレクト中...</title></head>
-        <body>
-            <script>
-                window.location.href = '/admin';
-            </script>
-        </body>
-    </html>
-    """
+    if require_auth_check(request):
+        return RedirectResponse(url="/admin", status_code=302)
+    else:
+        return RedirectResponse(url="/login", status_code=302)
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     """ログイン画面"""
+    # 既にログイン済みなら管理画面へリダイレクト
+    if require_auth_check(request):
+        return RedirectResponse(url="/admin", status_code=302)
     return templates.TemplateResponse("login.html", {"request": request})
 
 @router.get("/admin", response_class=HTMLResponse)
 async def admin_page(request: Request):
     """管理画面（ダッシュボードタブを初期表示）"""
+    if not require_auth_check(request):
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse("admin/index.html", {"request": request})
 
 @router.get("/dashboard/{student_id}", response_class=HTMLResponse)
 async def dashboard_page(request: Request, student_id: str):
     """生徒ダッシュボード"""
+    if not require_auth_check(request):
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/index.html",
         {"request": request, "student_id": student_id}
@@ -46,12 +49,16 @@ async def dashboard_page(request: Request, student_id: str):
 @router.get("/upload", response_class=HTMLResponse)
 async def upload_page(request: Request):
     """CSVアップロード画面"""
+    if not require_auth_check(request):
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse("upload/index.html", {"request": request})
 
 @router.get("/admin/tabs/{tab_name}", response_class=HTMLResponse)
 async def admin_tab(request: Request, tab_name: str):
     """管理画面タブコンテンツ切り替え（HTMX用）"""
-    # Phase 3（管理画面）で各タブテンプレートを実装
+    if not require_auth_check(request):
+        return RedirectResponse(url="/login", status_code=302)
+
     tab_templates = {
         "dashboard": "admin/_dashboard_tab.html",
         "grades": "admin/_grades_tab.html",

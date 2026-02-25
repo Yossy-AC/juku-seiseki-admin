@@ -3,13 +3,14 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies import require_auth
 from app.models.student import Student
 from app.services.grade_calculator import get_attendance_summary
 
 router = APIRouter()
 
 @router.get("/student/{student_id}", response_class=HTMLResponse)
-async def get_attendance(student_id: str, db: Session = Depends(get_db)):
+async def get_attendance(student_id: str, db: Session = Depends(get_db), _: None = Depends(require_auth)):
     """出席状況（HTMX用）"""
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
@@ -50,6 +51,6 @@ async def get_attendance(student_id: str, db: Session = Depends(get_db)):
     """
 
 @router.post("", response_class=HTMLResponse)
-async def create_attendance(db: Session = Depends(get_db)):
+async def create_attendance(db: Session = Depends(get_db), _: None = Depends(require_auth)):
     """出席記録追加（HTMX用）"""
     return "<p>出席記録追加は Phase 3 で実装予定</p>"

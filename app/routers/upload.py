@@ -5,6 +5,7 @@ import io
 import base64
 
 from app.database import get_db
+from app.dependencies import require_auth
 from app.services.csv_importer import (
     parse_new_format_csv,
     match_students_to_ids,
@@ -19,7 +20,7 @@ router = APIRouter()
 preview_cache = {}
 
 @router.post("/csv", response_class=HTMLResponse)
-async def upload_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_csv(file: UploadFile = File(...), db: Session = Depends(get_db), _: None = Depends(require_auth)):
     """CSV解析＆プレビュー（HTMX用）"""
     try:
         # ファイル読み込み
@@ -75,7 +76,7 @@ async def upload_csv(file: UploadFile = File(...), db: Session = Depends(get_db)
         """
 
 @router.post("/save", response_class=HTMLResponse)
-async def save_csv(cache_key: str, db: Session = Depends(get_db)):
+async def save_csv(cache_key: str, db: Session = Depends(get_db), _: None = Depends(require_auth)):
     """保存確定（HTMX用）"""
     try:
         # キャッシュからデータを取得
@@ -125,7 +126,7 @@ async def save_csv(cache_key: str, db: Session = Depends(get_db)):
         """
 
 @router.get("/template")
-async def download_template():
+async def download_template(_: None = Depends(require_auth)):
     """CSVテンプレートダウンロード"""
     template = """【生徒データ】セクション
 教室コード,教室,氏名,ｼﾒｲ,性,高校,学科,学校ｸﾗｽ,部活,志望大学,志望学部

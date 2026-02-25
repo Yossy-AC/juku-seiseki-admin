@@ -3,13 +3,14 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies import require_auth
 from app.models.student import Student
 from app.models.class_ import Class
 
 router = APIRouter()
 
 @router.get("", response_class=HTMLResponse)
-async def list_students(db: Session = Depends(get_db)):
+async def list_students(db: Session = Depends(get_db), _: None = Depends(require_auth)):
     """生徒一覧（HTMX用）"""
     students = db.query(Student).all()
 
@@ -45,6 +46,6 @@ async def list_students(db: Session = Depends(get_db)):
     """
 
 @router.post("", response_class=HTMLResponse)
-async def create_student(db: Session = Depends(get_db)):
+async def create_student(db: Session = Depends(get_db), _: None = Depends(require_auth)):
     """生徒追加（HTMX用）"""
     return "<p>生徒追加は Phase 3 後期で実装予定</p>"
