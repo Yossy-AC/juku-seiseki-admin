@@ -40,10 +40,32 @@ PYTHONIOENCODING=utf-8 python scripts/import_json.py
 
 ## 3. 開発サーバー起動
 
+### 方法 A: Windows バッチファイル（推奨）
+
+```bash
+# Windows コマンドプロンプトで実行
+run.bat
+```
+
+このバッチファイルは以下を自動で行います：
+- 古いプロセスを終了
+- UTF-8 エンコーディング設定
+- サーバー起動
+
+### 方法 B: Python スクリプト
+
+```bash
+python run.py
+```
+
+### 方法 C: 直接コマンド実行
+
 ```bash
 cd /c/GitHub_StudentManager/Student-Manager
-PYTHONIOENCODING=utf-8 uvicorn app.main:app --reload --port 8000
+PYTHONIOENCODING=utf-8 uvicorn app.main:app --port 8000
 ```
+
+**注意**: Windows では `--reload` フラグを使用するとエラーが発生する場合があります。その場合は上記の方法 A または B を使用してください。
 
 出力例：
 ```
@@ -68,11 +90,28 @@ ADMIN_PASSWORD=your-admin-password-here
 
 ## トラブルシューティング
 
+### PermissionError: [WinError 5] アクセスが拒否されました
+
+**原因**: Windows での multiprocessing の問題
+
+**解決策**: 以下の方法で起動してください
+
+```bash
+# 方法 1: バッチファイル使用（推奨）
+run.bat
+
+# 方法 2: Python スクリプト使用
+python run.py
+
+# 方法 3: --reload なしで実行
+python -m uvicorn app.main:app --port 8000
+```
+
 ### ポート 8000 が使用中
 
 ```bash
 # 別のポート使用
-PYTHONIOENCODING=utf-8 uvicorn app.main:app --reload --port 8001
+python -m uvicorn app.main:app --port 8001
 ```
 
 ### Unicode エラー
