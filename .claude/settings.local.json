@@ -5,7 +5,8 @@
       "Bash(git commit -m \"Update CLAUDE.md: add communication style and FastAPI migration status\")",
       "Bash(git add -A)",
       "Bash(git commit -m \"Phase 2: Implement grade_calculator.py and dynamic grades/attendance endpoints\")",
-      "Bash(git commit -m \"Phase 3: Implement admin panel tabs - grades input, students/classes management\")"
+      "Bash(git commit -m \"Phase 3: Implement admin panel tabs - grades input, students/classes management\")",
+      "Bash(git commit -m \"Phase 4: Implement CSV upload functionality with preview and save\")"
     ]
   }
 }
