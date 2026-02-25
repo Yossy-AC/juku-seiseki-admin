@@ -6,3 +6,13 @@ node_modules/
 dist/
 build/
 .wrangler/
+
+# Python
+.venv/
+__pycache__/
+*.egg-info/
+*.pyc
+
+# DB・一時ファイル
+student_manager.db
+server.pid
